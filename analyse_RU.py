@@ -122,8 +122,8 @@ try:
 				assert(line[0]=='@')
 				fields = line.split()
 				readName = fields[0][1:]
-				channel = int(fields[5].split("=")[1])
-				assert(fields[5].split("=")[0] == "ch")
+				channel = int(fields[3].split("=")[1])
+				assert(fields[3].split("=")[0] == "ch")
 				assert(channel >= 0 and channel <= 512)
 				if channel >= min_channel and channel <= max_channel:
 					target_channel_reads.append(readName)
