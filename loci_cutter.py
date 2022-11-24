@@ -18,10 +18,15 @@ def get_options():
                     action="store_true",
                     default=False,
                     help='Generate separate fasta files of cut and remaining sequences. ')
+    IO.add_argument('--cutoff',
+                    type=float,
+                    default=0.7,
+                    help='Cutoff of alignment length to confirm match. '
+                         'Default = 0.7')
     return parser.parse_args()
 
-def get_best_map(index, fasta):
-    a = mp.Aligner(index, preset="asm5")
+def get_best_map(index, fasta, cutoff):
+    a = mp.Aligner(index, preset="asm10")
 
     best_hit = (None, None, 0, 0, 0)
 
@@ -32,14 +37,18 @@ def get_best_map(index, fasta):
         for hit in a.map(sequence):
             if not hit.is_primary:
                 continue
-            query_hit = hit.mlen
+            query_hit = hit.blen
+
+            # set cutoff for minimum alignment length
+            if query_hit < cutoff * len(sequence):
+                continue
 
             if query_hit > best_hit[-1]:
                 best_hit = (id, hit.ctg, hit.r_st, hit.r_en, query_hit)
 
     return best_hit
 
-def cut_loci(infiles, fasta, separate=False):
+def cut_loci(infiles, in_fasta, separate=False, cutoff=0.7):
     file_list = []
 
     with open(infiles, "r") as f:
@@ -47,7 +56,7 @@ def cut_loci(infiles, fasta, separate=False):
             file_list.append(line.strip())
 
     for file in file_list:
-        best_map = get_best_map(file, fasta)
+        best_map = get_best_map(file, in_fasta, cutoff)
 
         if best_map[0] != None:
             out_pref = os.path.splitext(file)[0]
@@ -91,8 +100,9 @@ def main():
     infiles = options.infiles
     fasta = options.fasta
     separate = options.separate
+    cutoff = options.cutoff
 
-    cut_loci(infiles, fasta, separate)
+    cut_loci(infiles, fasta, separate, cutoff)
 
     return 0
 
