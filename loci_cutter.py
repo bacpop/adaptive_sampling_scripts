@@ -48,7 +48,7 @@ def get_best_map(index, fasta, cutoff):
 
     return best_hit
 
-def cut_loci(infiles, in_fasta, separate=False, cutoff=0.7):
+def cut_loci(infiles, in_fasta, separate, cutoff):
     file_list = []
 
     with open(infiles, "r") as f:
@@ -98,11 +98,11 @@ def cut_loci(infiles, in_fasta, separate=False, cutoff=0.7):
 def main():
     options = get_options()
     infiles = options.infiles
-    fasta = options.fasta
+    query = options.query
     separate = options.separate
     cutoff = options.cutoff
 
-    cut_loci(infiles, fasta, separate, cutoff)
+    cut_loci(infiles, query, separate, cutoff)
 
     return 0
 
