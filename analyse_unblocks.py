@@ -1,6 +1,5 @@
 """
 Adapted from summarise_fq.py (https://github.com/LooseLab/readfish/blob/master/ru/summarise_fq.py)
-Copyright LooseLab (C)
 """
 import gzip
 from pathlib import Path
@@ -77,20 +76,6 @@ def get_fq(directory):
     yield from files
 
 
-def icumsum(arr):
-    total = 0
-    for i, x in enumerate(arr):
-        total += x
-        yield i, total
-
-
-def N50(arr):
-    if not isinstance(arr, list):
-        arr = list(arr)
-    arr.sort()
-    s = sum(arr)
-    return int(arr[[i for i, c in icumsum(arr) if c >= s * 0.5][0]])
-
 def main():
     options = get_options()
     reference = options.ref
@@ -109,8 +94,8 @@ def main():
 
         print("Using reference: {}".format(reference), file=sys.stderr)
 
-    target_reads_dict = defaultdict(defaultdict(list))
-    unblocks_reads_dict = defaultdict(defaultdict(list))
+    target_reads_dict = defaultdict(lambda: defaultdict(list))
+    unblocks_reads_dict = defaultdict(lambda: defaultdict(list))
 
     for f in get_fq(indir):
         if f.endswith(".gz"):
@@ -119,15 +104,15 @@ def main():
             fopen = open
 
         # get filename and extension
-        base = os.path.splitext(f)[0].split("_")
+        base = os.path.splitext(os.path.basename(f))[0].split("_")
         if "barcode" in base:
-            file_id = "_".join(base[1], base[2])
+            file_id = "_".join([base[1], base[2]])
         else:
-            file_id = "_".join(base[1], "NA")
+            file_id = "_".join([base[1], "NA"])
 
         with fopen(f, "rt") as fh:
             for name, seq, _ in readfq(fh):
-                ref = None
+                ref = "None"
                 if reference is not None:
                     # Map seq, only use first mapping (a bit janky)
                     for r in mapper.map(seq):
@@ -146,7 +131,7 @@ def main():
             for ref, length_list in entry.items():
                 for length in length_list:
                     o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(length) + "\n")
-        for file_id, entry in target_reads_dict.items():
+        for file_id, entry in unblocks_reads_dict.items():
             type = file_id.split("_")
             for ref, length_list in entry.items():
                 for length in length_list:
