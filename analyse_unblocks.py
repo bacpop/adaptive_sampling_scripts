@@ -88,6 +88,8 @@ def main():
     with open(unblocks, "r") as f:
         for line in f:
             unblock_set.add(line.strip())
+    print("Total unblocks: {}".format(len(unblock_set)))
+
 
     if reference is not None:
         mapper = mp.Aligner(reference, preset="map-ont")
@@ -105,7 +107,8 @@ def main():
 
         # get filename and extension
         base = os.path.splitext(os.path.basename(f))[0].split("_")
-        if "barcode" in base:
+        #print(base)
+        if "barcode" in base[2]:
             file_id = "_".join([base[1], base[2]])
         else:
             file_id = "_".join([base[1], "NA"])
@@ -120,9 +123,10 @@ def main():
                         break
 
                 if name in unblock_set:
-                    target_reads_dict[file_id][ref].append(len(seq))
-                else:
                     unblocks_reads_dict[file_id][ref].append(len(seq))
+                else:
+                    target_reads_dict[file_id][ref].append(len(seq))
+                    #print(name)
 
     with open(out, "w") as o:
         o.write("Type\tFilter\tBarcode\tRef\tLength\n")
