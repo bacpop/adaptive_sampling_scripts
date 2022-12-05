@@ -123,23 +123,25 @@ def main():
                         break
 
                 if name in unblock_set:
-                    unblocks_reads_dict[file_id][ref].append(len(seq))
+                    unblocks_reads_dict[file_id][ref].append((name, len(seq)))
                 else:
-                    target_reads_dict[file_id][ref].append(len(seq))
+                    target_reads_dict[file_id][ref].append((name, len(seq)))
                     #print(name)
 
     with open(out, "w") as o:
-        o.write("Type\tFilter\tBarcode\tRef\tLength\n")
+        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\n")
         for file_id, entry in target_reads_dict.items():
             type = file_id.split("_")
             for ref, length_list in entry.items():
-                for length in length_list:
-                    o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(length) + "\n")
+                for len_entry in length_list:
+                    o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(len_entry[1])
+                            + "\t" + len_entry[0] + "\n")
         for file_id, entry in unblocks_reads_dict.items():
             type = file_id.split("_")
             for ref, length_list in entry.items():
-                for length in length_list:
-                    o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(length) + "\n")
+                for len_entry in length_list:
+                    o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(len_entry[1])
+                            + "\t" + len_entry[0] + "\n")
 
 
 if __name__ == "__main__":
