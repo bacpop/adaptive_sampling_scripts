@@ -57,8 +57,10 @@ def get_best_map(index, fasta, cutoff):
 
     return best_hit
 
-def cut_loci(infiles, in_fasta, separate, cutoff):
+def cut_loci(infiles, in_fasta, separate, cutoff, outpref):
     file_list = []
+
+    count_dict = {}
 
     with open(infiles, "r") as f:
         for line in f:
@@ -66,6 +68,10 @@ def cut_loci(infiles, in_fasta, separate, cutoff):
 
     for file in file_list:
         best_map = get_best_map(file, in_fasta, cutoff)
+
+        if best_map[0] not in count_dict:
+            count_dict[best_map[0]] = []
+        count_dict[best_map[0]].append(best_map[0])
 
         if best_map[0] != None:
             out_pref = os.path.splitext(file)[0]
@@ -102,6 +108,25 @@ def cut_loci(infiles, in_fasta, separate, cutoff):
             SeqIO.write(rem_records, out_pref + "_rem.fa", "fasta")
             if separate:
                 SeqIO.write(cut_records, out_pref + "_cut.fa", "fasta")
+        # if no match, copy and save as rem
+        else:
+            rem_records = []
+
+            fasta_sequences = SeqIO.parse(open(file), 'fasta')
+            for fasta in fasta_sequences:
+                rem_records.append(SeqRecord(fasta.seq, id=fasta.id,
+                                             description=fasta.description))
+            SeqIO.write(rem_records, out_pref + "_nocut.fa", "fasta")
+
+
+    # print output files
+    with open(outpref + "_summary.txt", "w") as o1, open(outpref + ".tsv", "w") as o2:
+        o1.write("Assignment\tCount")
+        o2.write("File\tAssignment")
+        for assignment, file_list in count_dict.items():
+            o1.write(str(assignment) + "\t" + str(len(file_list)))
+            for file in file_list:
+                o2.write(str(file) + "\t" + str(assignment))
 
 def count_loci(infiles, outpref):
     file_list = []
@@ -132,7 +157,6 @@ def count_loci(infiles, outpref):
             for file in file_list:
                 o2.write(str(file) + "\t" + str(assignment))
 
-
 def main():
     options = get_options()
     infiles = options.infiles
@@ -143,7 +167,7 @@ def main():
     outpref = options.outpref
 
     if not count:
-        cut_loci(infiles, query, separate, cutoff)
+        cut_loci(infiles, query, separate, cutoff, outpref)
     else:
         count_loci(infiles, outpref)
 
