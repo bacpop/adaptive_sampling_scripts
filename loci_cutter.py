@@ -89,7 +89,7 @@ def cut_loci(infiles, in_fasta, separate, cutoff, outpref):
                     pre_remainder = sequence[:best_map[2]]
                     post_remainder = sequence[best_map[3]:]
 
-                    rem_records.append(SeqRecord(Seq(pre_remainder), id=id + "_precut",
+                    rem_records.append(SeqRecord(Seq(pre_remainder), id=id + "_precut_" + best_map[0],
                                              description=fasta.description))
                     # print to separate files
                     if separate:
@@ -99,7 +99,7 @@ def cut_loci(infiles, in_fasta, separate, cutoff, outpref):
                         rem_records.append(SeqRecord(Seq(cut), id=id + "_cut_" + best_map[0],
                                                  description=fasta.description))
 
-                    rem_records.append(SeqRecord(Seq(post_remainder), id=id + "_postcut",
+                    rem_records.append(SeqRecord(Seq(post_remainder), id=id + "_postcut_" + best_map[0],
                                              description=fasta.description))
                 else:
                     rem_records.append(SeqRecord(fasta.seq, id=fasta.id,
