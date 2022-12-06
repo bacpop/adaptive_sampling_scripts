@@ -4,6 +4,8 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 import os
 import argparse
+from collections import defaultdict
+
 def get_options():
     description = "Cuts out loci based on alignment of reference sequences"
     parser = argparse.ArgumentParser(description=description,
@@ -23,6 +25,13 @@ def get_options():
                     default=0.7,
                     help='Cutoff of alignment length to confirm match. '
                          'Default = 0.7')
+    IO.add_argument('--count',
+                    action="store_true",
+                    default=False,
+                    help='Go through cut input files, count different aligning sequences. ')
+    IO.add_argument('--outpref',
+                    default="result",
+                    help='Output prefix ')
     return parser.parse_args()
 
 def get_best_map(index, fasta, cutoff):
@@ -94,6 +103,35 @@ def cut_loci(infiles, in_fasta, separate, cutoff):
             if separate:
                 SeqIO.write(cut_records, out_pref + "_cut.fa", "fasta")
 
+def count_loci(infiles, outpref):
+    file_list = []
+    count_dict = {}
+
+    with open(infiles, "r") as f:
+        for line in f:
+            # ensure only cut files are analysed
+            if "_cut" in line:
+                file_list.append(line.strip())
+
+    for file in file_list:
+        base = os.path.splitext(os.path.basename(file))[0].split("_cut")[0]
+        fasta_sequences = SeqIO.parse(open(file), 'fasta')
+        for fasta in fasta_sequences:
+            id = fasta.id
+            assignment = id.split("_")[-1]
+            if assignment not in count_dict:
+                count_dict[assignment] = []
+            count_dict[assignment].append(base)
+
+    # print output files
+    with open(outpref + "_summary.txt", "w") as o1, open(outpref + ".tsv", "w") as o2:
+        o1.write("Assignment\tCount")
+        o2.write("File\tAssignment")
+        for assignment, file_list in count_dict.items():
+            o1.write(str(assignment) + "\t" + str(len(file_list)))
+            for file in file_list:
+                o2.write(str(file) + "\t" + str(assignment))
+
 
 def main():
     options = get_options()
@@ -101,8 +139,13 @@ def main():
     query = options.query
     separate = options.separate
     cutoff = options.cutoff
+    count = options.count
+    outpref = options.outpref
 
-    cut_loci(infiles, query, separate, cutoff)
+    if not count:
+        cut_loci(infiles, query, separate, cutoff)
+    else:
+        count_loci(infiles, outpref)
 
     return 0
 
