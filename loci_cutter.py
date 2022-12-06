@@ -121,12 +121,12 @@ def cut_loci(infiles, in_fasta, separate, cutoff, outpref):
 
     # print output files
     with open(outpref + "_summary.txt", "w") as o1, open(outpref + ".tsv", "w") as o2:
-        o1.write("Assignment\tCount")
-        o2.write("File\tAssignment")
+        o1.write("Assignment\tCount\n")
+        o2.write("File\tAssignment\n")
         for assignment, file_list in count_dict.items():
-            o1.write(str(assignment) + "\t" + str(len(file_list)))
+            o1.write(str(assignment) + "\t" + str(len(file_list)) + "\n")
             for file in file_list:
-                o2.write(str(file) + "\t" + str(assignment))
+                o2.write(str(file) + "\t" + str(assignment) + "\n")
 
 def count_loci(infiles, outpref):
     file_list = []
@@ -150,12 +150,12 @@ def count_loci(infiles, outpref):
 
     # print output files
     with open(outpref + "_summary.txt", "w") as o1, open(outpref + ".tsv", "w") as o2:
-        o1.write("Assignment\tCount")
-        o2.write("File\tAssignment")
+        o1.write("Assignment\tCount\n")
+        o2.write("File\tAssignment\n")
         for assignment, file_list in count_dict.items():
-            o1.write(str(assignment) + "\t" + str(len(file_list)))
+            o1.write(str(assignment) + "\t" + str(len(file_list)) + "\n")
             for file in file_list:
-                o2.write(str(file) + "\t" + str(assignment))
+                o2.write(str(file) + "\t" + str(assignment) + "\n")
 
 def main():
     options = get_options()
