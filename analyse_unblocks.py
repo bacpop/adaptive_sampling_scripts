@@ -114,7 +114,7 @@ def main():
         for line in f:
             entry = line.strip().split("\t")
             read_id = entry[4]
-            start_time = entry[9]
+            start_time = float(entry[9])
             if start_time < mux_period:
                 mux_set.add(read_id)
 
