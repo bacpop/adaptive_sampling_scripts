@@ -6,7 +6,7 @@ from pathlib import Path
 from statistics import mean, median, stdev
 from collections import defaultdict
 import sys
-import os
+import os, glob
 import mappy as mp
 
 import argparse
@@ -20,8 +20,15 @@ def get_options():
                     required=True,
                     help='Path to read directory')
     IO.add_argument('--unblocks',
-                    required=True,
-                    help='Path to unblocks file')
+                    default=None,
+                    help='Path to unblocks file. Default is inferred from --indir.')
+    IO.add_argument('--summary',
+                    default=None,
+                    help='Path to run summary file. Default is inferred from --indir.')
+    IO.add_argument('--mux-period',
+                    type=int,
+                    default=480,
+                    help='Period of mux scan (in seconds) to ignore reads prior. Default = 480 (8 mins)')
     IO.add_argument('--out',
                     default="result.txt",
                     help='Output file.')
@@ -82,6 +89,15 @@ def main():
     out = options.out
     indir = options.indir
     unblocks = options.unblocks
+    summary = options.summary
+    mux_period = options.mux_period
+
+    if unblocks is None:
+        unblocks = os.path.join(indir, "unblocked_read_ids.txt")
+
+    if summary is None:
+        sum_list = glob.glob(os.path.join(indir, "sequencing_summary_*.txt"))
+        summary = sum_list[0]
 
     # create unblocks set
     unblock_set = set()
@@ -90,6 +106,17 @@ def main():
             unblock_set.add(line.strip())
     print("Total unblocks: {}".format(len(unblock_set)))
 
+    # create mux-period set
+    mux_set = set()
+    with open(summary, "r") as f:
+        # ignore header
+        next(f)
+        for line in f:
+            entry = line.strip().split("\t")
+            read_id = entry[4]
+            start_time = entry[9]
+            if start_time < mux_period:
+                mux_set.add(read_id)
 
     if reference is not None:
         mapper = mp.Aligner(reference, preset="map-ont")
@@ -122,26 +149,31 @@ def main():
                         ref = r.ctg
                         break
 
+                # check if in mux-period
+                mux = 0
+                if name in mux_set:
+                    mux = 1
+
                 if name in unblock_set:
-                    unblocks_reads_dict[file_id][ref].append((name, len(seq)))
+                    unblocks_reads_dict[file_id][ref].append((name, len(seq), mux))
                 else:
-                    target_reads_dict[file_id][ref].append((name, len(seq)))
+                    target_reads_dict[file_id][ref].append((name, len(seq), mux))
                     #print(name)
 
     with open(out, "w") as o:
-        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\n")
+        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tMux\n")
         for file_id, entry in target_reads_dict.items():
             type = file_id.split("_")
             for ref, length_list in entry.items():
                 for len_entry in length_list:
                     o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(len_entry[1])
-                            + "\t" + len_entry[0] + "\n")
+                            + "\t" + len_entry[0] + "\t" + str(len_entry[2]) + "\n")
         for file_id, entry in unblocks_reads_dict.items():
             type = file_id.split("_")
             for ref, length_list in entry.items():
                 for len_entry in length_list:
                     o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(len_entry[1])
-                            + "\t" + len_entry[0] + "\n")
+                            + "\t" + len_entry[0] + "\t" + str(len_entry[2]) + "\n")
 
 
 if __name__ == "__main__":
