@@ -1,4 +1,4 @@
-# Details on origin of cps sequences:
+# Details on sources of cps sequences:
 
 | Serotype | Source                                                                                                 |
 |----------|--------------------------------------------------------------------------------------------------------|
