@@ -159,6 +159,9 @@ if remove_multi == True:
 # write summary file
 with open(output + "_summary.txt", "w") as o_sum:
 	o_sum.write("Statisitic\tChannel\tAlignment\tValue\n")
+	# create dictionary to determine enrichment
+	enrichment_dict = {}
+
 	# target channels
 	dictionary, output_dict = AnalyseForChannels(target_channel_reads, samFile, multi_align, matching_prop)
 	print("Reference stats for channels " + str(channels) + ": ")
@@ -167,6 +170,8 @@ with open(output + "_summary.txt", "w") as o_sum:
 			print( ref.reference + "\t" + str(ref.totalReads) + "\t" + str(ref.totalLength))
 			o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", ref.reference, str(ref.totalReads)))
 			o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", ref.reference, str(ref.totalLength)))
+			enrichment_dict[ref.reference] = {}
+			enrichment_dict[ref.reference]["Target_bases_mapped"] = ref.totalLength
 	total_read_bases_mapped = 0
 	prev_reads = set()
 
@@ -185,6 +190,10 @@ with open(output + "_summary.txt", "w") as o_sum:
 	print("Total read bases: " + str(target_channel_bases))
 	print("Total read bases mapped: " + str(total_read_bases_mapped))
 
+	# iterate over enrichment dict, calculate enrichment for total bases
+	for key in enrichment_dict:
+		enrichment_dict[key]["Target_prop_bases"] = enrichment_dict[key]["Target_bases_mapped"] / target_channel_bases
+
 	# write to summary file
 	o_sum.write("Reads_total\t{}\t{}\t{}\n".format("Target", "Total", str(len(target_channel_reads))))
 	o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(totalMapped)))
@@ -200,6 +209,9 @@ with open(output + "_summary.txt", "w") as o_sum:
 			print( ref.reference + "\t" + str(ref.totalReads) + "\t" + str(ref.totalLength))
 			o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Non_target", ref.reference, str(ref.totalReads)))
 			o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Non_target", ref.reference, str(ref.totalLength)))
+			if ref.reference not in enrichment_dict:
+				enrichment_dict[ref.reference] = {}
+			enrichment_dict[ref.reference]["Nontarget_bases_mapped"] = ref.totalLength
 	total_read_bases_mapped = 0
 	for ref, read_list in output_dict.items():
 		with open(output + "_nontarget_" + str(ref) + ".fasta", "w") as o:
@@ -215,6 +227,14 @@ with open(output + "_summary.txt", "w") as o_sum:
 	print("Total number of reads mapped: " + str(totalMapped) + "/" + str(len(non_target_channel_reads)))
 	print("Total read bases: " + str(non_target_channel_bases))
 	print("Total read bases mapped: " + str(total_read_bases_mapped))
+
+	# calculate enrichment for all entries with mappings in target and non-target
+	for key in enrichment_dict:
+		if "Nontarget_bases_mapped" in enrichment_dict[key] and "Target_prop_bases" in enrichment_dict[key]:
+			non_target_prop_bases = enrichment_dict[key]["Nontarget_bases_mapped"] / non_target_channel_bases
+			enrichment = enrichment_dict[key]["Target_prop_bases"] / non_target_prop_bases
+
+			o_sum.write("Enrichment\t{}\t{}\t{}\n".format("NA", key, str(enrichment)))
 
 	# write to summary file
 	o_sum.write("Reads_total\t{}\t{}\t{}\n".format("Non_target", "Total", str(len(non_target_channel_reads))))
