@@ -156,48 +156,68 @@ if remove_multi == True:
 			else:
 				multi_align.add(fields[0])
 
-# target channels
-dictionary, output_dict = AnalyseForChannels(target_channel_reads, samFile, multi_align, matching_prop)
-print("Reference stats for channels " + str(channels) + ": ")
-totalMapped = 0
-for ref in dictionary.values():
-		print( ref.reference + "\t" + str(ref.totalReads) + "\t" + str(ref.totalLength))
-total_read_bases_mapped = 0
-prev_reads = set()
-for ref, read_list in output_dict.items():
-	with open(output + "_target_" + str(ref) + ".fasta", "w") as o:
-		for entry in read_list:
-			read_id, reference, identity = entry
-			o.write(read_id + "\t" + reference + "\t" + str(identity) + "\n" + read_seqs[read_id] + "\n")
-			if read_id in prev_reads:
-				continue
-			prev_reads.add(read_id)
-			if ref != "unaligned":
-				total_read_bases_mapped += read_lengths[read_id]
-				totalMapped += 1
-print("Total number of reads mapped: " + str(totalMapped) + "/" + str(len(target_channel_reads)))
-print("Total read bases: " + str(target_channel_bases))
-print("Total read bases mapped: " + str(total_read_bases_mapped))
+# write summary file
+with open(output + "_summary.txt", "w") as o_sum:
+	o_sum.write("Statisitic\tChannel\tAlignment\tValue\n")
+	# target channels
+	dictionary, output_dict = AnalyseForChannels(target_channel_reads, samFile, multi_align, matching_prop)
+	print("Reference stats for channels " + str(channels) + ": ")
+	totalMapped = 0
+	for ref in dictionary.values():
+			print( ref.reference + "\t" + str(ref.totalReads) + "\t" + str(ref.totalLength))
+			o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", ref.reference, str(ref.totalReads)))
+			o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", ref.reference, str(ref.totalLength)))
+	total_read_bases_mapped = 0
+	prev_reads = set()
 
-# non target channels
-dictionary, output_dict = AnalyseForChannels(non_target_channel_reads, samFile, multi_align, matching_prop)
-print("\nReference stats for all other channels: ")
-totalMapped = 0
-prev_reads = set()
-for ref in dictionary.values():
-		print( ref.reference + "\t" + str(ref.totalReads) + "\t" + str(ref.totalLength))
-total_read_bases_mapped = 0
-for ref, read_list in output_dict.items():
-	with open(output + "_nontarget_" + str(ref) + ".fasta", "w") as o:
-		for entry in read_list:
-			read_id, reference, identity = entry
-			o.write(read_id + "\t" + reference + "\t" + str(identity) + "\n" + read_seqs[read_id] + "\n")
-			if read_id in prev_reads:
-				continue
-			prev_reads.add(read_id)
-			if ref != "unaligned":
-				total_read_bases_mapped += read_lengths[read_id]
-				totalMapped += 1
-print("Total number of reads mapped: " + str(totalMapped) + "/" + str(len(non_target_channel_reads)))
-print("Total read bases: " + str(non_target_channel_bases))
-print("Total read bases mapped: " + str(total_read_bases_mapped))
+	for ref, read_list in output_dict.items():
+		with open(output + "_target_" + str(ref) + ".fasta", "w") as o:
+			for entry in read_list:
+				read_id, reference, identity = entry
+				o.write(read_id + "\t" + reference + "\t" + str(identity) + "\n" + read_seqs[read_id] + "\n")
+				if read_id in prev_reads:
+					continue
+				prev_reads.add(read_id)
+				if ref != "unaligned":
+					total_read_bases_mapped += read_lengths[read_id]
+					totalMapped += 1
+	print("Total number of reads mapped: " + str(totalMapped) + "/" + str(len(target_channel_reads)))
+	print("Total read bases: " + str(target_channel_bases))
+	print("Total read bases mapped: " + str(total_read_bases_mapped))
+
+	# write to summary file
+	o_sum.write("Reads_total\t{}\t{}\t{}\n".format("Target", "Total", str(len(target_channel_reads))))
+	o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(totalMapped)))
+	o_sum.write("Bases_total\t{}\t{}\t{}\n".format("Target", "Total", str(target_channel_bases)))
+	o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(total_read_bases_mapped)))
+
+	# non target channels
+	dictionary, output_dict = AnalyseForChannels(non_target_channel_reads, samFile, multi_align, matching_prop)
+	print("\nReference stats for all other channels: ")
+	totalMapped = 0
+	prev_reads = set()
+	for ref in dictionary.values():
+			print( ref.reference + "\t" + str(ref.totalReads) + "\t" + str(ref.totalLength))
+			o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Non_target", ref.reference, str(ref.totalReads)))
+			o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Non_target", ref.reference, str(ref.totalLength)))
+	total_read_bases_mapped = 0
+	for ref, read_list in output_dict.items():
+		with open(output + "_nontarget_" + str(ref) + ".fasta", "w") as o:
+			for entry in read_list:
+				read_id, reference, identity = entry
+				o.write(read_id + "\t" + reference + "\t" + str(identity) + "\n" + read_seqs[read_id] + "\n")
+				if read_id in prev_reads:
+					continue
+				prev_reads.add(read_id)
+				if ref != "unaligned":
+					total_read_bases_mapped += read_lengths[read_id]
+					totalMapped += 1
+	print("Total number of reads mapped: " + str(totalMapped) + "/" + str(len(non_target_channel_reads)))
+	print("Total read bases: " + str(non_target_channel_bases))
+	print("Total read bases mapped: " + str(total_read_bases_mapped))
+
+	# write to summary file
+	o_sum.write("Reads_total\t{}\t{}\t{}\n".format("Non_target", "Total", str(len(non_target_channel_reads))))
+	o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Non_target", "Total", str(totalMapped)))
+	o_sum.write("Bases_total\t{}\t{}\t{}\n".format("Non_target", "Total", str(non_target_channel_bases)))
+	o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Non_target", "Total", str(total_read_bases_mapped)))
