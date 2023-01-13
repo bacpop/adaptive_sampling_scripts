@@ -9,7 +9,7 @@
 | 05       | [Bentley et al 2006](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0020031)          |
 | 06A      | [Bentley et al 2006](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0020031)          |
 | 06B      | [Bentley et al 2006](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0020031)          |
-| 06D      | [Bratcher et al 2011](https://www.microbiologyresearch.org/content/journal/micro/10.1099/mic.0.043901-0#tab2) |
+| 06D      | [Bratcher et al 2011](https://www.microbiologyresearch.org/content/journal/micro/10.1099/mic.0.043901-0) |
 | 07A      | [Bentley et al 2006](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0020031)          |
 | 07B      | [Bentley et al 2006](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0020031)          |
 | 07C      | [Bentley et al 2006](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0020031)          |
