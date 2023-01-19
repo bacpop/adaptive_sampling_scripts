@@ -143,10 +143,12 @@ def main():
         with fopen(f, "rt") as fh:
             for name, seq, _ in readfq(fh):
                 ref = "None"
+                perc_id = 0
                 if reference is not None:
                     # Map seq, only use first mapping (a bit janky)
                     for r in mapper.map(seq):
                         ref = r.ctg
+                        perc_id = r.mlen / len(seq)
                         break
 
                 # check if in mux-period
@@ -155,25 +157,25 @@ def main():
                     mux = 1
 
                 if name in unblock_set:
-                    unblocks_reads_dict[file_id][ref].append((name, len(seq), mux))
+                    unblocks_reads_dict[file_id][ref].append((name, len(seq), perc_id, mux))
                 else:
-                    target_reads_dict[file_id][ref].append((name, len(seq), mux))
+                    target_reads_dict[file_id][ref].append((name, len(seq), perc_id, mux))
                     #print(name)
 
     with open(out, "w") as o:
-        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tMux\n")
+        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tperc_id\tMux\n")
         for file_id, entry in target_reads_dict.items():
             type = file_id.split("_")
             for ref, length_list in entry.items():
                 for len_entry in length_list:
                     o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(len_entry[1])
-                            + "\t" + len_entry[0] + "\t" + str(len_entry[2]) + "\n")
+                            + "\t" + len_entry[0] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[3]) + "\n")
         for file_id, entry in unblocks_reads_dict.items():
             type = file_id.split("_")
             for ref, length_list in entry.items():
                 for len_entry in length_list:
                     o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + ref + "\t" + str(len_entry[1])
-                            + "\t" + len_entry[0] + "\t" + str(len_entry[2]) + "\n")
+                            + "\t" + len_entry[0] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[3]) + "\n")
 
 
 if __name__ == "__main__":
