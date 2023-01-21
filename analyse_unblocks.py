@@ -8,6 +8,7 @@ from collections import defaultdict
 import sys
 import os, glob
 import mappy as mp
+from Bio import SeqIO
 
 import argparse
 
@@ -35,6 +36,9 @@ def get_options():
     IO.add_argument('--ref',
                     default=None,
                     help='Specify minimap2 index. No alignment done if not specified. ')
+    IO.add_argument('--loci',
+                    default=None,
+                    help='Loci to find in minimap2 index ')
     return parser.parse_args()
 
 def readfq(fp):  # this is a generator function
@@ -74,7 +78,6 @@ def readfq(fp):  # this is a generator function
                 yield name, seq, None  # yield a fasta record instead
                 break
 
-
 def get_fq(directory):
     types = ([".fastq"], [".fastq", ".gz"], [".fq"], [".fq", ".gz"])
     files = (
@@ -82,6 +85,27 @@ def get_fq(directory):
     )
     yield from files
 
+# determine best loci alignment in each reference
+def get_best_map(index, fasta, cutoff=0.7):
+    a = mp.Aligner(index, preset="asm10")
+
+    ref_dict = defaultdict((None, None, 0, 0, 0))
+
+    fasta_sequences = SeqIO.parse(open(fasta), 'fasta')
+    for fasta in fasta_sequences:
+        id, sequence = fasta.id, str(fasta.seq)
+
+        for hit in a.map(sequence):
+            query_hit = hit.blen
+
+            # set cutoff for minimum alignment length
+            if query_hit < cutoff * len(sequence):
+                continue
+
+            if query_hit > ref_dict[hit.ref][-1]:
+                ref_dict[hit.ctg] = (id, hit.r_st, hit.r_en, query_hit)
+
+    return ref_dict
 
 def main():
     options = get_options()
@@ -91,6 +115,7 @@ def main():
     unblocks = options.unblocks
     summary = options.summary
     mux_period = options.mux_period
+    loci = options.loci
 
     if unblocks is None:
         unblocks = os.path.join(indir, "unblocked_read_ids.txt")
@@ -123,6 +148,10 @@ def main():
 
         print("Using reference: {}".format(reference), file=sys.stderr)
 
+        if loci is not None:
+            print("Aligning loci...")
+            ref_dict = get_best_map(reference, loci)
+
     target_reads_dict = defaultdict(list)
     unblocks_reads_dict = defaultdict(list)
 
@@ -142,50 +171,49 @@ def main():
 
         with fopen(f, "rt") as fh:
             for name, seq, _ in readfq(fh):
-                refdict = defaultdict(0)
-                #perc_id = defaultdict()
+                ref_align = None
+                perc_id = 0
+                overlap = 0
                 if reference is not None:
-                    # Map seq, determine best alignment to all reference
+                    # Map seq, take first alignment (primary)
                     for r in mapper.map(seq):
-                        ref = r.ctg
+                        ref_align = r.ctg
                         perc_id = r.mlen / len(seq)
-                        if refdict[ref] < perc_id:
-                            refdict[ref] = perc_id
+
+                        # determine whether alignment to loci
+                        if loci is not None:
+                            coord_start = r.r_st
+                            coord_end = r.r_en
+                            ref_start = ref_dict[ref_align][1]
+                            ref_end = ref_dict[ref_align][2]
+
+                            overlap = len(range(max(ref_start, coord_start), min(ref_end, coord_end) + 1))
+
+                        break
 
                 # check if in mux-period
                 mux = 0
                 if name in mux_set:
                     mux = 1
 
-                # generate list of references and perc_ids
-                reflist = ""
-                perc_idlist = ""
-                for key, entry in refdict.items():
-                    reflist += str(key) + ";"
-                    perc_idlist += str(entry) + ";"
-
-                if reflist != "":
-                    reflist = reflist[:-1]
-                    perc_idlist = perc_idlist[:-1]
-
                 if name in unblock_set:
-                    unblocks_reads_dict[file_id].append((name, len(seq), reflist, perc_idlist, mux))
+                    unblocks_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
                 else:
-                    target_reads_dict[file_id].append((name, len(seq), reflist, perc_idlist, mux))
+                    target_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
                     #print(name)
 
     with open(out, "w") as o:
-        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tperc_id\tMux\n")
+        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tperc_id\tloci_overlap\tMux\n")
         for file_id, length_list in target_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
-                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\n")
+                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t" + str(len_entry[5]) + "\n")
         for file_id, length_list in unblocks_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
-                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\n")
+                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t" + str(len_entry[5]) + "\n")
 
 
 if __name__ == "__main__":
