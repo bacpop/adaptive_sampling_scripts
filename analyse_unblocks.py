@@ -85,11 +85,14 @@ def get_fq(directory):
     )
     yield from files
 
+def default_val():
+    return (None, None, 0, 0, 0)
+
 # determine best loci alignment in each reference
 def get_best_map(index, fasta, cutoff=0.7):
     a = mp.Aligner(index, preset="asm10")
 
-    ref_dict = defaultdict((None, None, 0, 0, 0))
+    ref_dict = defaultdict(default_val)
 
     fasta_sequences = SeqIO.parse(open(fasta), 'fasta')
     for fasta in fasta_sequences:
@@ -102,7 +105,7 @@ def get_best_map(index, fasta, cutoff=0.7):
             if query_hit < cutoff * len(sequence):
                 continue
 
-            if query_hit > ref_dict[hit.ref][-1]:
+            if query_hit > ref_dict[hit.ctg][-1]:
                 ref_dict[hit.ctg] = (id, hit.r_st, hit.r_en, query_hit)
 
     return ref_dict
@@ -187,7 +190,7 @@ def main():
                             ref_start = ref_dict[ref_align][1]
                             ref_end = ref_dict[ref_align][2]
 
-                            overlap = len(range(max(ref_start, coord_start), min(ref_end, coord_end) + 1))
+                            overlap = len(range(max(ref_start, coord_start), min(ref_end, coord_end)))
 
                         break
 
