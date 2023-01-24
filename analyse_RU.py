@@ -386,3 +386,6 @@ def main():
 			o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["non_target_channel_reads_mapped"])))
 			o_sum.write("Bases_total\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["non_target_channel_bases"])))
 			o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["non_target_channel_bases_mapped"])))
+
+if __name__ == "__main__":
+    main()
