@@ -348,7 +348,7 @@ def main():
 							else:
 								enrichment = "Inf"
 
-						o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), key, str(enrichment)))
+						o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), ref, str(enrichment)))
 
 			# write to summary file
 			o_sum.write("Reads_total\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), "Total", str(results_dict[barcode]["non_target_channel_reads"])))
