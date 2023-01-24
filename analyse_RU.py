@@ -39,6 +39,11 @@ def get_options():
 					action="store_true",
 					help='Remove multi-mapping reads.'
 						 'Default=False')
+	IO.add_argument('-b',
+					default=False,
+					action="store_true",
+					help='Align only pass reads.'
+						 'Default=False')
 	return parser.parse_args()
 
 class ReferenceStats:
@@ -116,62 +121,6 @@ def get_best_map(index, fasta, cutoff=0.7):
 
     return ref_dict
 
-def AnalyseForChannels(_readsForChannels, _samFilename, multi_align, matching_prop=0):
-	ref_dict = dict()
-	ref_dict["unaligned"] = []
-	ReferenceStatDict = dict()
-	ReferenceStatDict["unaligned"] = ReferenceStats("unaligned")
-	try:
-		with open(_samFilename, 'r') as infile:
-			for line in infile:
-				fields = line.split()
-				if fields[0] in _readsForChannels:
-					reference = fields[2]
-					sequenceLength = read_lengths[fields[0]]
-					identity = 0
-					if reference == "*":
-						stats = ReferenceStatDict["unaligned"]
-						ref_dict["unaligned"].append((fields[0], reference, identity))
-						stats.totalReads += 1
-						stats.totalLength += sequenceLength
-						continue
-					CIGAR = fields[5]
-					num_matches = 0
-					num_mismatches = 0
-					matches = re.findall(r'(\d+)([A-Z]{1})', CIGAR)
-					# get number of M and I/D in CIGAR
-					for m in matches:
-						if m[1] == "M":
-							num_matches += int(m[0])
-						elif m[1] == "I" or m[1] == "D":
-							num_mismatches += 1
-					# get number of non-identical 'matches' in CIGAR
-					num_mismatches = int(fields[11].split(":")[-1]) - num_mismatches
-					# get number of identical bases in alignment
-					num_matches -= num_mismatches
-					# pass alignment if proportion of matching bases in below threshold
-					identity = num_matches / sequenceLength
-					if identity < matching_prop or fields[0] in multi_align:
-						stats = ReferenceStatDict["unaligned"]
-						ref_dict["unaligned"].append((fields[0], reference, identity))
-						stats.totalReads += 1
-						stats.totalLength += sequenceLength
-						continue
-					if reference not in ReferenceStatDict.keys():
-						ReferenceStatDict[reference] = ReferenceStats(reference)
-						ref_dict[reference] = []
-					ref_dict[reference].append((fields[0], reference, identity))
-					stats = ReferenceStatDict[reference]
-					stats.totalReads += 1
-					stats.totalLength += sequenceLength
-	except (OSError, IOError) as e:
-		if getattr(e, 'errno', 0) == errno.ENOENT:
-			print("Could not find file " + infile)
-		print(e)
-		sys.exit(2)
-
-	return ReferenceStatDict, ref_dict
-
 def main():
 	options = get_options()
 
@@ -184,21 +133,20 @@ def main():
 	matching_prop = options.p
 	output = options.o
 	remove_multi = options.r
+	only_pass = options.b
 
+	# initialise results dictionaries
 	results_dict = {}
-
-	# target_channel_reads = list()
-	# non_target_channel_reads = list()
-	#read_lengths = dict()
 	read_seqs = {"target" : {},
 				 "non-target" : {}}
 
 	mapper = mp.Aligner(reference, preset="map-ont")
 
-	# store multi-aligned bases
-	multi_align = set()
-
 	for f in get_fq(fastqDir):
+		if only_pass:
+			if "/fastq_pass/" not in f:
+				continue
+
 		print("Aligning: {}".format(str(f)))
 		# get filename and extension
 		base = os.path.splitext(os.path.basename(f))[0].split("_")
@@ -309,18 +257,18 @@ def main():
 
 	# write summary file
 	with open(output + "_summary.txt", "w") as o_sum:
-		o_sum.write("Statistic\tChannel\tAlignment\tValue\n")
+		o_sum.write("Statistic\tBarcode\tChannel\tAlignment\tValue\n")
 		# create dictionary to determine enrichment
 		enrichment_dict = {}
 
 		# target channels
 		print("Reference stats for channels " + str(channels) + ": ")
 		for barcode in results_dict.keys():
-			print("Barcode: " + str(barcode) + ": ")
+			print("Barcode: " + str(barcode))
 			for ref, item in results_dict[barcode]["ref_dict"].items():
 					print(ref + "\t" + str(item["target_channel_reads"]) + "\t" + str(item["target_channel_bases"]))
-					o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", ref, str(item["target_channel_reads"])))
-					o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", ref, str(item["target_channel_bases"])))
+					o_sum.write("Reads_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), ref, str(item["target_channel_reads"])))
+					o_sum.write("Bases_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), ref, str(item["target_channel_bases"])))
 					enrichment_dict[ref] = {}
 					enrichment_dict[ref]["Target_bases_mapped"] = item["target_channel_bases"]
 
@@ -340,22 +288,22 @@ def main():
 				enrichment_dict[key]["Target_prop_bases"] = enrichment_dict[key]["Target_bases_mapped"] / results_dict[barcode]["target_channel_bases"]
 
 			# write to summary file
-			o_sum.write("Reads_total\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["target_channel_reads"])))
-			o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["target_channel_reads_mapped"])))
-			o_sum.write("Bases_total\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["target_channel_bases"])))
-			o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["target_channel_bases_mapped"])))
+			o_sum.write("Reads_total\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), "Total", str(results_dict[barcode]["target_channel_reads"])))
+			o_sum.write("Reads_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), "Total", str(results_dict[barcode]["target_channel_reads_mapped"])))
+			o_sum.write("Bases_total\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), "Total", str(results_dict[barcode]["target_channel_bases"])))
+			o_sum.write("Bases_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), "Total", str(results_dict[barcode]["target_channel_bases_mapped"])))
 
 		# non target channels
 		print("\nReference stats for all other channels: ")
 		for barcode in results_dict.keys():
-			print("Barcode: " + str(barcode) + ": ")
+			print("Barcode: " + str(barcode))
 			for ref, item in results_dict[barcode]["ref_dict"].items():
 					print(ref + "\t" + str(item["non_target_channel_reads"]) + "\t" + str(item["non_target_channel_bases"]))
-					o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", ref, str(item["non_target_channel_reads"])))
-					o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", ref, str(item["non_target_channel_bases"])))
-					if ref.reference not in enrichment_dict:
-						enrichment_dict[ref.reference] = {}
-					enrichment_dict[ref.reference]["Nontarget_bases_mapped"] = item["non_target_channel_bases"]
+					o_sum.write("Reads_mapped\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), ref, str(item["non_target_channel_reads"])))
+					o_sum.write("Bases_mapped\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), ref, str(item["non_target_channel_bases"])))
+					if ref not in enrichment_dict:
+						enrichment_dict[ref] = {}
+					enrichment_dict[ref]["Nontarget_bases_mapped"] = item["non_target_channel_bases"]
 
 			for barcode, entry in read_seqs["non-target"].items():
 				for ref, read_list in entry.items():
@@ -374,13 +322,13 @@ def main():
 					non_target_prop_bases = enrichment_dict[key]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
 					enrichment = enrichment_dict[key]["Target_prop_bases"] / non_target_prop_bases
 
-					o_sum.write("Enrichment\t{}\t{}\t{}\n".format("NA", key, str(enrichment)))
+					o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), key, str(enrichment)))
 
 			# write to summary file
-			o_sum.write("Reads_total\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["non_target_channel_reads"])))
-			o_sum.write("Reads_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["non_target_channel_reads_mapped"])))
-			o_sum.write("Bases_total\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["non_target_channel_bases"])))
-			o_sum.write("Bases_mapped\t{}\t{}\t{}\n".format("Target", "Total", str(results_dict[barcode]["non_target_channel_bases_mapped"])))
+			o_sum.write("Reads_total\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), "Total", str(results_dict[barcode]["non_target_channel_reads"])))
+			o_sum.write("Reads_mapped\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), "Total", str(results_dict[barcode]["non_target_channel_reads_mapped"])))
+			o_sum.write("Bases_total\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), "Total", str(results_dict[barcode]["non_target_channel_bases"])))
+			o_sum.write("Bases_mapped\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), "Total", str(results_dict[barcode]["non_target_channel_bases_mapped"])))
 
 if __name__ == "__main__":
     main()
