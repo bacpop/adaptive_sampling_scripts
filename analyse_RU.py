@@ -219,7 +219,7 @@ def main():
 				for r in mapper.map(seq):
 					align_count += 1
 
-					len_ref_map = r.r_en - r.r_st
+					len_ref_map = abs(r.r_en - r.r_st)
 
 					# take as best alignment if matching length is longer
 					if match_len < r.mlen:
