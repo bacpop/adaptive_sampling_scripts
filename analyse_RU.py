@@ -199,6 +199,7 @@ def main():
 	multi_align = set()
 
 	for f in get_fq(fastqDir):
+		print("Aligning: {}".format(str(f)))
 		# get filename and extension
 		base = os.path.splitext(os.path.basename(f))[0].split("_")
 		# print(base)
@@ -324,7 +325,7 @@ def main():
 					enrichment_dict[ref]["Target_bases_mapped"] = item["target_channel_bases"]
 
 			for barcode, entry in read_seqs["target"].items():
-				for ref, read_list in entry:
+				for ref, read_list in entry.items():
 					with open(output + "_" + str(barcode) + "_target_" + str(ref) + ".fasta", "w") as o:
 						for read_tup in read_list:
 							read_id, identity, seq = read_tup
@@ -357,7 +358,7 @@ def main():
 					enrichment_dict[ref.reference]["Nontarget_bases_mapped"] = item["non_target_channel_bases"]
 
 			for barcode, entry in read_seqs["non-target"].items():
-				for ref, read_list in entry:
+				for ref, read_list in entry.items():
 					with open(output + "_" + str(barcode) + "_nontarget_" + str(ref) + ".fasta", "w") as o:
 						for read_tup in read_list:
 							read_id, identity, seq = read_tup
