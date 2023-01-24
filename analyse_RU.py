@@ -276,6 +276,7 @@ def main():
 		if verbose:
 			print("Reference stats for channels " + str(channels) + ": ")
 		for barcode in barcode_list:
+			enrichment_dict[barcode] = {}
 			if verbose:
 				print("Barcode: " + str(barcode))
 			for ref, item in results_dict[barcode]["ref_dict"].items():
@@ -283,8 +284,8 @@ def main():
 					print(ref + "\t" + str(item["target_channel_reads"]) + "\t" + str(item["target_channel_bases"]))
 				o_sum.write("Reads_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), ref, str(item["target_channel_reads"])))
 				o_sum.write("Bases_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), ref, str(item["target_channel_bases"])))
-				enrichment_dict[ref] = {}
-				enrichment_dict[ref]["Target_bases_mapped"] = item["target_channel_bases"]
+				enrichment_dict[barcode][ref] = {}
+				enrichment_dict[barcode][ref]["Target_prop_bases"] = item["target_channel_bases"] / results_dict[barcode]["target_channel_bases"]
 
 			for barcode, entry in read_seqs["target"].items():
 				for ref, read_list in entry.items():
@@ -298,10 +299,6 @@ def main():
 				print("Total number of reads mapped: " + str(results_dict[barcode]["target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["target_channel_reads"]))
 				print("Total read bases: " + str(results_dict[barcode]["target_channel_bases"]))
 				print("Total read bases mapped: " + str(results_dict[barcode]["target_channel_bases_mapped"]))
-
-			# iterate over enrichment dict, calculate enrichment for total bases
-			for key in enrichment_dict:
-				enrichment_dict[key]["Target_prop_bases"] = enrichment_dict[key]["Target_bases_mapped"] / results_dict[barcode]["target_channel_bases"]
 
 			# write to summary file
 			o_sum.write("Reads_total\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), "Total", str(results_dict[barcode]["target_channel_reads"])))
@@ -320,9 +317,9 @@ def main():
 					print(ref + "\t" + str(item["non_target_channel_reads"]) + "\t" + str(item["non_target_channel_bases"]))
 				o_sum.write("Reads_mapped\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), ref, str(item["non_target_channel_reads"])))
 				o_sum.write("Bases_mapped\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), ref, str(item["non_target_channel_bases"])))
-				if ref not in enrichment_dict:
-					enrichment_dict[ref] = {}
-				enrichment_dict[ref]["Nontarget_bases_mapped"] = item["non_target_channel_bases"]
+				if ref not in enrichment_dict[barcode]:
+					enrichment_dict[barcode][ref] = {}
+				enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] = item["non_target_channel_bases"]
 
 			for barcode, entry in read_seqs["non-target"].items():
 				for ref, read_list in entry.items():
@@ -339,18 +336,19 @@ def main():
 				print("Total read bases mapped: " + str(results_dict[barcode]["non_target_channel_bases_mapped"]))
 
 			# calculate enrichment for all entries with mappings in target and non-target
-			for key in enrichment_dict:
-				if "Nontarget_bases_mapped" in enrichment_dict[key] and "Target_prop_bases" in enrichment_dict[key]:
-					non_target_prop_bases = enrichment_dict[key]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
-					if non_target_prop_bases > 0:
-						enrichment = enrichment_dict[key]["Target_prop_bases"] / non_target_prop_bases
-					else:
-						if enrichment_dict[key]["Target_prop_bases"] == 0:
-							enrichment = 1
+			for barcode in enrichment_dict.keys():
+				for ref in enrichment_dict[barcode].keys():
+					if "Nontarget_bases_mapped" in enrichment_dict[barcode][ref] and "Target_prop_bases" in enrichment_dict[barcode][ref]:
+						non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
+						if non_target_prop_bases > 0:
+							enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
 						else:
-							enrichment = "Inf"
+							if enrichment_dict[barcode][ref]["Target_prop_bases"] == 0:
+								enrichment = 1
+							else:
+								enrichment = "Inf"
 
-					o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), key, str(enrichment)))
+						o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), key, str(enrichment)))
 
 			# write to summary file
 			o_sum.write("Reads_total\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), "Total", str(results_dict[barcode]["non_target_channel_reads"])))
