@@ -336,19 +336,18 @@ def main():
 				print("Total read bases mapped: " + str(results_dict[barcode]["non_target_channel_bases_mapped"]))
 
 			# calculate enrichment for all entries with mappings in target and non-target
-			for barcode in enrichment_dict.keys():
-				for ref in enrichment_dict[barcode].keys():
-					if "Nontarget_bases_mapped" in enrichment_dict[barcode][ref] and "Target_prop_bases" in enrichment_dict[barcode][ref]:
-						non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
-						if non_target_prop_bases > 0:
-							enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
+			for ref in enrichment_dict[barcode].keys():
+				if "Nontarget_bases_mapped" in enrichment_dict[barcode][ref] and "Target_prop_bases" in enrichment_dict[barcode][ref]:
+					non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
+					if non_target_prop_bases > 0:
+						enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
+					else:
+						if enrichment_dict[barcode][ref]["Target_prop_bases"] == 0:
+							enrichment = 1
 						else:
-							if enrichment_dict[barcode][ref]["Target_prop_bases"] == 0:
-								enrichment = 1
-							else:
-								enrichment = "Inf"
+							enrichment = "Inf"
 
-						o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), ref, str(enrichment)))
+					o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), ref, str(enrichment)))
 
 			# write to summary file
 			o_sum.write("Reads_total\t{}\t{}\t{}\t{}\n".format("Non-target", str(barcode), "Total", str(results_dict[barcode]["non_target_channel_reads"])))
