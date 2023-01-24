@@ -17,27 +17,28 @@ def get_options():
 	IO = parser.add_argument_group('Input/options.out')
 	IO.add_argument('-f',
 					required=True,
-					help='Input directory containing fastq files')
+					help='Input directory containing fastq files.')
 	IO.add_argument('-i',
 					required=True,
-					help='Reference for minimap2 alignment (can be fasta or mmi)')
+					help='Reference for minimap2 alignment (can be fasta or mmi).')
 	IO.add_argument('-c',
 					default="1-256",
-					help='channels to separate, in the form \"a-b\".'
-						 '[Default = 1-256]')
+					help='channels to separate, in the form \"a-b\". '
+						 '[Default=1-256]')
 	IO.add_argument('-p',
 					default=0.8,
 					type=float,
-					help='Minimum proportion of bases matching reference in alignment'
+					help='Minimum proportion of bases matching reference in alignment. '
 						 'Default=0.8')
 	IO.add_argument('-o',
 					default="RU_output",
-					help='Output prefix'
+					help='Output prefix. '
 						 'Default="RU_output"')
 	IO.add_argument('-r',
 					default=False,
 					action="store_true",
-					help='Remove multi-mapping reads')
+					help='Remove multi-mapping reads.'
+						 'Default=False')
 	return parser.parse_args()
 
 class ReferenceStats:
@@ -198,20 +199,13 @@ def main():
 	multi_align = set()
 
 	for f in get_fq(fastqDir):
-		if f.endswith(".gz"):
-			fopen = gzip.open
-		else:
-			fopen = open
-
 		# get filename and extension
 		base = os.path.splitext(os.path.basename(f))[0].split("_")
 		# print(base)
 		if "barcode" in base[2]:
 			barcode = base[2]
-			file_id = "_".join([base[1], base[2]])
 		else:
 			barcode = "NA"
-			file_id = "_".join([base[1], "NA"])
 
 		if barcode not in results_dict:
 			results_dict[barcode] = {"target_channel_bases": 0,
@@ -228,87 +222,87 @@ def main():
 			read_seqs["target"][barcode] = {}
 			read_seqs["non-target"][barcode] = {}
 
+		with gzip.open(f, "rt") as handle:
+			input_sequences = SeqIO.parse(handle, 'fastq')
+			for entry in input_sequences:
+				fields, seq = entry.description, str(entry.seq)
+				fields = fields.split()
+				readName = fields[0][1:]
+				channel = int(fields[3].split("=")[1])
+				assert (fields[3].split("=")[0] == "ch")
+				assert (channel >= 0 and channel <= 512)
 
-		input_sequences = SeqIO.parse(fopen(f), 'fasta')
-		for entry in input_sequences:
-			fields, seq = entry.description, str(entry.seq)
-			fields = fields.split()
-			readName = fields[0][1:]
-			channel = int(fields[3].split("=")[1])
-			assert (fields[3].split("=")[0] == "ch")
-			assert (channel >= 0 and channel <= 512)
 
+				# determine is read is in target channel
+				target = False
+				if channel >= min_channel and channel <= max_channel:
+					target = True
 
-			# determine is read is in target channel
-			target = False
-			if channel >= min_channel and channel <= max_channel:
-				target = True
+				# read_lengths[readName] = length
+				# read_seqs[readName] = seq
 
-			# read_lengths[readName] = length
-			# read_seqs[readName] = seq
-
-			ref_align = "unaligned"
-
-			# perc id is alignment coverage of reference, just in case clipping present
-			perc_id = 0
-			match_len = 0
-
-			align_count = 0
-
-			# Map seq, take alignment with largest matching sequence only
-			for r in mapper.map(seq):
-				align_count += 1
-
-				len_ref_map = r.r_en - r.r_st
-
-				# take as best alignment if matching length is longer
-				if match_len < r.mlen:
-					ref_align = r.ctg
-					perc_id = r.mlen / len_ref_map
-
-			# add to read_seqs
-			if ref_align not in read_seqs["target"][barcode]:
-				read_seqs["target"][barcode][ref_align] = []
-				read_seqs["non-target"][barcode][ref_align] = []
-
-			if target:
-				read_seqs["target"][barcode][ref_align].append((readName, perc_id, seq))
-			else:
-				read_seqs["non-target"][barcode][ref_align].append((readName, perc_id, seq))
-
-			# if below cutoff, or removing multialigning reads, set reference as unaligned
-			if perc_id < matching_prop:
-				ref_align = "unaligned"
-			if remove_multi and align_count > 1:
 				ref_align = "unaligned"
 
-			length = len(seq)
+				# perc id is alignment coverage of reference, just in case clipping present
+				perc_id = 0
+				match_len = 0
 
-			if ref_align not in results_dict[barcode]["ref_dict"]:
-				results_dict[barcode]["ref_dict"][ref_align] = {"target_channel_bases": 0,
-																"non_target_channel_bases" : 0,
-																"target_channel_reads" : 0,
-																"non_target_channel_reads" : 0}
+				align_count = 0
 
-			if target:
-				results_dict[barcode]["target_channel_bases"] += length
-				results_dict[barcode]["target_channel_reads"] += 1
-				results_dict[barcode]["ref_dict"][ref_align]["target_channel_bases"] += length
-				results_dict[barcode]["ref_dict"][ref_align]["target_channel_reads"] += 1
-				if ref_align != "unaligned":
-					results_dict[barcode]["target_channel_bases_mapped"] += length
-					results_dict[barcode]["target_channel_reads_mapped"] += 1
-			else:
-				results_dict[barcode]["non_target_channel_bases"] += length
-				results_dict[barcode]["non_target_channel_reads"] += 1
-				results_dict[barcode]["ref_dict"][ref_align]["non_target_channel_bases"] += length
-				results_dict[barcode]["ref_dict"][ref_align]["non_target_channel_reads"] += 1
-				if ref_align != "unaligned":
-					results_dict[barcode]["non_target_channel_bases_mapped"] += length
-					results_dict[barcode]["non_target_channel_reads_mapped"] += 1
+				# Map seq, take alignment with largest matching sequence only
+				for r in mapper.map(seq):
+					align_count += 1
 
-			results_dict[barcode]["total_bases"] += length
-			results_dict[barcode]["total_reads"] += 1
+					len_ref_map = r.r_en - r.r_st
+
+					# take as best alignment if matching length is longer
+					if match_len < r.mlen:
+						ref_align = r.ctg
+						perc_id = r.mlen / len_ref_map
+
+				# add to read_seqs
+				if ref_align not in read_seqs["target"][barcode]:
+					read_seqs["target"][barcode][ref_align] = []
+					read_seqs["non-target"][barcode][ref_align] = []
+
+				if target:
+					read_seqs["target"][barcode][ref_align].append((readName, perc_id, seq))
+				else:
+					read_seqs["non-target"][barcode][ref_align].append((readName, perc_id, seq))
+
+				# if below cutoff, or removing multialigning reads, set reference as unaligned
+				if perc_id < matching_prop:
+					ref_align = "unaligned"
+				if remove_multi and align_count > 1:
+					ref_align = "unaligned"
+
+				length = len(seq)
+
+				if ref_align not in results_dict[barcode]["ref_dict"]:
+					results_dict[barcode]["ref_dict"][ref_align] = {"target_channel_bases": 0,
+																	"non_target_channel_bases" : 0,
+																	"target_channel_reads" : 0,
+																	"non_target_channel_reads" : 0}
+
+				if target:
+					results_dict[barcode]["target_channel_bases"] += length
+					results_dict[barcode]["target_channel_reads"] += 1
+					results_dict[barcode]["ref_dict"][ref_align]["target_channel_bases"] += length
+					results_dict[barcode]["ref_dict"][ref_align]["target_channel_reads"] += 1
+					if ref_align != "unaligned":
+						results_dict[barcode]["target_channel_bases_mapped"] += length
+						results_dict[barcode]["target_channel_reads_mapped"] += 1
+				else:
+					results_dict[barcode]["non_target_channel_bases"] += length
+					results_dict[barcode]["non_target_channel_reads"] += 1
+					results_dict[barcode]["ref_dict"][ref_align]["non_target_channel_bases"] += length
+					results_dict[barcode]["ref_dict"][ref_align]["non_target_channel_reads"] += 1
+					if ref_align != "unaligned":
+						results_dict[barcode]["non_target_channel_bases_mapped"] += length
+						results_dict[barcode]["non_target_channel_reads_mapped"] += 1
+
+				results_dict[barcode]["total_bases"] += length
+				results_dict[barcode]["total_reads"] += 1
 
 
 
