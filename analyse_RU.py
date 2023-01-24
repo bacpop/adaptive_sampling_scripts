@@ -288,10 +288,12 @@ def main():
 
 			for barcode, entry in read_seqs["target"].items():
 				for ref, read_list in entry.items():
+					if len(read_list) < 1:
+						continue
 					with open(output + "_" + str(barcode) + "_target_" + str(ref) + ".fasta", "w") as o:
 						for read_tup in read_list:
 							read_id, identity, seq = read_tup
-							o.write(">" + read_id + "\t" + reference + "\t" + str(identity) + "\n" + seq + "\n")
+							o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
 			if verbose:
 				print("Total number of reads mapped: " + str(results_dict[barcode]["target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["target_channel_reads"]))
 				print("Total read bases: " + str(results_dict[barcode]["target_channel_bases"]))
@@ -324,10 +326,12 @@ def main():
 
 			for barcode, entry in read_seqs["non-target"].items():
 				for ref, read_list in entry.items():
+					if len(read_list) < 1:
+						continue
 					with open(output + "_" + str(barcode) + "_nontarget_" + str(ref) + ".fasta", "w") as o:
 						for read_tup in read_list:
 							read_id, identity, seq = read_tup
-							o.write(">" + read_id + "\t" + reference + "\t" + str(identity) + "\n" + seq + "\n")
+							o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
 
 			if verbose:
 				print("Total number of reads mapped: " + str(results_dict[barcode]["non_target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["non_target_channel_reads"]))
