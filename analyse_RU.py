@@ -44,6 +44,11 @@ def get_options():
 					action="store_true",
 					help='Align only pass reads.'
 						 'Default=False')
+	IO.add_argument('-q',
+					default=False,
+					action="store_true",
+					help='Generate fastq files for aligned sequence. '
+						 'Default=False')
 	IO.add_argument('-v',
 					default=False,
 					action="store_true",
@@ -140,6 +145,7 @@ def main():
 	remove_multi = options.r
 	only_pass = options.b
 	verbose = options.v
+	gen_fastq = options.q
 
 	# initialise results dictionaries
 	results_dict = {}
@@ -221,14 +227,15 @@ def main():
 						perc_id = r.mlen / len_ref_map
 
 				# add to read_seqs
-				if ref_align not in read_seqs["target"][barcode]:
-					read_seqs["target"][barcode][ref_align] = []
-					read_seqs["non-target"][barcode][ref_align] = []
+				if gen_fastq:
+					if ref_align not in read_seqs["target"][barcode]:
+						read_seqs["target"][barcode][ref_align] = []
+						read_seqs["non-target"][barcode][ref_align] = []
 
-				if target:
-					read_seqs["target"][barcode][ref_align].append((readName, perc_id, seq))
-				else:
-					read_seqs["non-target"][barcode][ref_align].append((readName, perc_id, seq))
+					if target:
+						read_seqs["target"][barcode][ref_align].append((readName, perc_id, seq))
+					else:
+						read_seqs["non-target"][barcode][ref_align].append((readName, perc_id, seq))
 
 				# if below cutoff, or removing multialigning reads, set reference as unaligned
 				if perc_id < matching_prop:
@@ -287,13 +294,14 @@ def main():
 				enrichment_dict[barcode][ref] = {}
 				enrichment_dict[barcode][ref]["Target_prop_bases"] = item["target_channel_bases"] / results_dict[barcode]["target_channel_bases"]
 
-			for ref, read_list in read_seqs["target"][barcode].items():
-				if len(read_list) < 1:
-					continue
-				with open(output + "_" + str(barcode) + "_target_" + str(ref) + ".fasta", "w") as o:
-					for read_tup in read_list:
-						read_id, identity, seq = read_tup
-						o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
+			if gen_fastq:
+				for ref, read_list in read_seqs["target"][barcode].items():
+					if len(read_list) < 1:
+						continue
+					with open(output + "_" + str(barcode) + "_target_" + str(ref) + ".fasta", "w") as o:
+						for read_tup in read_list:
+							read_id, identity, seq = read_tup
+							o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
 			if verbose:
 				print("Total number of reads mapped: " + str(results_dict[barcode]["target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["target_channel_reads"]))
 				print("Total read bases: " + str(results_dict[barcode]["target_channel_bases"]))
@@ -320,13 +328,14 @@ def main():
 					enrichment_dict[barcode][ref] = {}
 				enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] = item["non_target_channel_bases"]
 
-			for ref, read_list in read_seqs["non-target"][barcode].items():
-				if len(read_list) < 1:
-					continue
-				with open(output + "_" + str(barcode) + "_nontarget_" + str(ref) + ".fasta", "w") as o:
-					for read_tup in read_list:
-						read_id, identity, seq = read_tup
-						o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
+			if gen_fastq:
+				for ref, read_list in read_seqs["non-target"][barcode].items():
+					if len(read_list) < 1:
+						continue
+					with open(output + "_" + str(barcode) + "_nontarget_" + str(ref) + ".fasta", "w") as o:
+						for read_tup in read_list:
+							read_id, identity, seq = read_tup
+							o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
 
 			if verbose:
 				print("Total number of reads mapped: " + str(results_dict[barcode]["non_target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["non_target_channel_reads"]))
