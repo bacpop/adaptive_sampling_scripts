@@ -227,6 +227,7 @@ def main():
 
 					# take as best alignment if matching length is longer
 					if match_len < r.mlen:
+						match_len = r.mlen
 						ref_align = r.ctg
 						perc_id = r.mlen / len_ref_map
 
@@ -275,8 +276,6 @@ def main():
 				results_dict[barcode]["total_bases"] += length
 				results_dict[barcode]["total_reads"] += 1
 
-
-
 	# write summary file
 	with open(output + "_summary.txt", "w") as o_sum:
 		o_sum.write("Statistic\tBarcode\tChannel\tAlignment\tValue\n")
@@ -296,7 +295,10 @@ def main():
 				o_sum.write("Reads_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), ref, str(item["target_channel_reads"])))
 				o_sum.write("Bases_mapped\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), ref, str(item["target_channel_bases"])))
 				enrichment_dict[barcode][ref] = {}
-				enrichment_dict[barcode][ref]["Target_prop_bases"] = item["target_channel_bases"] / results_dict[barcode]["target_channel_bases"]
+				if results_dict[barcode]["target_channel_bases"] == 0:
+					enrichment_dict[barcode][ref]["Target_prop_bases"] = 0
+				else:
+					enrichment_dict[barcode][ref]["Target_prop_bases"] = item["target_channel_bases"] / results_dict[barcode]["target_channel_bases"]
 
 			if gen_fastq:
 				for ref, read_list in read_seqs["target"][barcode].items():
@@ -354,7 +356,7 @@ def main():
 						enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
 					else:
 						if enrichment_dict[barcode][ref]["Target_prop_bases"] == 0:
-							enrichment = 1
+							enrichment = 0
 						else:
 							enrichment = "Inf"
 
