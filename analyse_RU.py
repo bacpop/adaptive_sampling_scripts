@@ -278,7 +278,7 @@ def main():
 
 	# write summary file
 	with open(output + "_summary.txt", "w") as o_sum:
-		o_sum.write("Statistic\tBarcode\tChannel\tAlignment\tValue\n")
+		o_sum.write("Statistic\tChannel\tBarcode\tAlignment\tValue\n")
 		# create dictionary to determine enrichment
 		enrichment_dict = {}
 
