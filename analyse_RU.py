@@ -162,6 +162,10 @@ def main():
 			if "/fastq_pass/" not in f:
 				continue
 
+		# only run on gzipped files
+		if ".gz" not in f:
+			continue
+
 		if verbose:
 			print("Aligning: {}".format(str(f)))
 		# get filename and extension
