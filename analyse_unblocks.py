@@ -176,23 +176,33 @@ def main():
             for name, seq, _ in readfq(fh):
                 ref_align = None
                 perc_id = 0
+                matched_len = 0
                 overlap = 0
                 if reference is not None:
-                    # Map seq, take first alignment (primary)
+                    # Map seq, take alignment with largest mlen
                     for r in mapper.map(seq):
+                        if r.mlen < matched_len:
+                            continue
+
+                        # determine perc_id based on matched alignment length / alignment length in reference (maybe soft clipping)
+                        coord_start = r.r_st
+                        coord_end = r.r_en
+
+                        len_ref_map = abs(coord_end - coord_start)
+
                         ref_align = r.ctg
-                        perc_id = r.mlen / len(seq)
+                        perc_id = r.mlen / len_ref_map
+
+                        matched_len = r.mlen
 
                         # determine whether alignment to loci
                         if loci is not None:
-                            coord_start = r.r_st
-                            coord_end = r.r_en
                             ref_start = ref_dict[ref_align][1]
                             ref_end = ref_dict[ref_align][2]
 
                             overlap = len(range(max(ref_start, coord_start), min(ref_end, coord_end)))
 
-                        break
+
 
                 # check if in mux-period
                 mux = 0
