@@ -288,7 +288,10 @@ def main():
 		for barcode in barcode_list:
 			enrichment_dict[barcode] = {}
 			if verbose:
-				print("Barcode: " + str(barcode))
+				print("Target Barcode: " + str(barcode))
+				print("Total number of reads mapped: " + str(results_dict[barcode]["target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["target_channel_reads"]))
+				print("Total read bases: " + str(results_dict[barcode]["target_channel_bases"]))
+				print("Total read bases mapped: " + str(results_dict[barcode]["target_channel_bases_mapped"]))
 			for ref, item in results_dict[barcode]["ref_dict"].items():
 				if verbose:
 					print(ref + "\t" + str(item["target_channel_reads"]) + "\t" + str(item["target_channel_bases"]))
@@ -308,10 +311,6 @@ def main():
 						for read_tup in read_list:
 							read_id, identity, seq = read_tup
 							o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
-			if verbose:
-				print("Total number of reads mapped: " + str(results_dict[barcode]["target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["target_channel_reads"]))
-				print("Total read bases: " + str(results_dict[barcode]["target_channel_bases"]))
-				print("Total read bases mapped: " + str(results_dict[barcode]["target_channel_bases_mapped"]))
 
 			# write to summary file
 			o_sum.write("Reads_total\t{}\t{}\t{}\t{}\n".format("Target", str(barcode), "Total", str(results_dict[barcode]["target_channel_reads"])))
@@ -324,7 +323,10 @@ def main():
 			print("\nReference stats for all other channels: ")
 		for barcode in barcode_list:
 			if verbose:
-				print("Barcode: " + str(barcode))
+				print("Non-target Barcode: " + str(barcode))
+				print("Total number of reads mapped: " + str(results_dict[barcode]["non_target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["non_target_channel_reads"]))
+				print("Total read bases: " + str(results_dict[barcode]["non_target_channel_bases"]))
+				print("Total read bases mapped: " + str(results_dict[barcode]["non_target_channel_bases_mapped"]))
 			for ref, item in results_dict[barcode]["ref_dict"].items():
 				if verbose:
 					print(ref + "\t" + str(item["non_target_channel_reads"]) + "\t" + str(item["non_target_channel_bases"]))
@@ -342,11 +344,6 @@ def main():
 						for read_tup in read_list:
 							read_id, identity, seq = read_tup
 							o.write(">" + read_id + "\t" + ref + "\t" + str(identity) + "\n" + seq + "\n")
-
-			if verbose:
-				print("Total number of reads mapped: " + str(results_dict[barcode]["non_target_channel_reads_mapped"]) + "/" + str(results_dict[barcode]["non_target_channel_reads"]))
-				print("Total read bases: " + str(results_dict[barcode]["non_target_channel_bases"]))
-				print("Total read bases mapped: " + str(results_dict[barcode]["non_target_channel_bases_mapped"]))
 
 			# calculate enrichment for all entries with mappings in target and non-target
 			for ref in enrichment_dict[barcode].keys():
