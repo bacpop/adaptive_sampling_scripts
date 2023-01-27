@@ -348,8 +348,8 @@ def main():
 			# calculate enrichment for all entries with mappings in target and non-target
 			for ref in enrichment_dict[barcode].keys():
 				if "Nontarget_bases_mapped" in enrichment_dict[barcode][ref] and "Target_prop_bases" in enrichment_dict[barcode][ref]:
-					non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
-					if non_target_prop_bases > 0:
+					if results_dict[barcode]["non_target_channel_bases"] > 0:
+						non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
 						enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
 					else:
 						if enrichment_dict[barcode][ref]["Target_prop_bases"] == 0:
