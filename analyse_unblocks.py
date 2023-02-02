@@ -20,9 +20,6 @@ def get_options():
     IO.add_argument('--indir',
                     required=True,
                     help='Path to read directory')
-    IO.add_argument('--unblocks',
-                    default=None,
-                    help='Path to unblocks file. Default is inferred from --indir.')
     IO.add_argument('--summary',
                     default=None,
                     help='Path to run summary file. Default is inferred from --indir.')
@@ -115,24 +112,17 @@ def main():
     reference = options.ref
     out = options.out
     indir = options.indir
-    unblocks = options.unblocks
     summary = options.summary
     mux_period = options.mux_period
     loci = options.loci
-
-    if unblocks is None:
-        unblocks = os.path.join(indir, "unblocked_read_ids.txt")
 
     if summary is None:
         sum_list = glob.glob(os.path.join(indir, "sequencing_summary_*.txt"))
         summary = sum_list[0]
 
     # create unblocks set
-    unblock_set = set()
-    with open(unblocks, "r") as f:
-        for line in f:
-            unblock_set.add(line.strip())
-    print("Total unblocks: {}".format(len(unblock_set)))
+    unblock_dict = {}
+    no_unblocks = 0
 
     # create mux-period set
     mux_set = set()
@@ -142,9 +132,18 @@ def main():
         for line in f:
             entry = line.strip().split("\t")
             read_id = entry[4]
+            unblock = entry[23]
+            unblock_dict[read_id] = unblock
+
             start_time = float(entry[9])
             if start_time < mux_period:
                 mux_set.add(read_id)
+
+            # determine type of read
+            if unblock == "unblock_mux_change":
+                no_unblocks += 1
+
+    print("Total unblocks: {}".format(str(no_unblocks)))
 
     if reference is not None:
         mapper = mp.Aligner(reference, preset="map-ont")
@@ -157,6 +156,7 @@ def main():
 
     target_reads_dict = defaultdict(list)
     unblocks_reads_dict = defaultdict(list)
+    other_reads_dict = defaultdict(list)
 
     for f in get_fq(indir):
         if f.endswith(".gz"):
@@ -209,10 +209,13 @@ def main():
                 if name in mux_set:
                     mux = 1
 
-                if name in unblock_set:
-                    unblocks_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
-                else:
-                    target_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
+                if name in unblock_dict:
+                    if unblock_dict[name] == "signal_positive":
+                        target_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
+                    elif unblock_dict[name] == "data_service_unblock_mux_change":
+                        unblocks_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
+                    else:
+                        other_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
                     #print(name)
 
     with open(out, "w") as o:
@@ -226,6 +229,11 @@ def main():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
+                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t" + str(len_entry[5]) + "\n")
+        for file_id, length_list in other_reads_dict.items():
+            type = file_id.split("_")
+            for len_entry in length_list:
+                o.write("Other\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
                         + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t" + str(len_entry[5]) + "\n")
 
 
