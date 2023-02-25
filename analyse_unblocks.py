@@ -109,20 +109,13 @@ def get_best_map(index, fasta, cutoff=0.7):
     return ref_dict
 
 def main():
-    # options = get_options()
-    # reference = options.ref
-    # out = options.out
-    # indir = options.indir
-    # summary = options.summary
-    # mux_period = options.mux_period
-    # loci = options.loci
-
-    reference = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/data/cps/updated_cps.fasta"
-    out = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/test.txt"
-    indir = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/data/readfish_default_guppy_6_4_6/20230224_0957_MN25278_FAS37965_d64b9105"
-    summary = None
-    mux_period = 480
-    loci = None
+    options = get_options()
+    reference = options.ref
+    out = options.out
+    indir = options.indir
+    summary = options.summary
+    mux_period = options.mux_period
+    loci = options.loci
 
     if summary is None:
         sum_list = glob.glob(os.path.join(indir, "sequencing_summary_*.txt"))
@@ -186,6 +179,7 @@ def main():
         with fopen(f, "rt") as fh:
             for name, seq, _ in readfq(fh):
                 ref_align = None
+                ref_len = 0
                 coord_start = "NA"
                 coord_end = "NA"
                 perc_id = 0
@@ -206,6 +200,8 @@ def main():
                         ref_align = r.ctg
                         perc_id = r.mlen / len_ref_map
 
+                        ref_len = r.ctg_len
+
                         matched_len = r.mlen
 
                         # determine whether alignment to loci
@@ -223,33 +219,33 @@ def main():
 
                 if name in unblock_dict:
                     if unblock_dict[name] == "signal_positive":
-                        target_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end))
+                        target_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end, ref_len))
                     elif unblock_dict[name] == "data_service_unblock_mux_change":
-                        unblocks_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end))
+                        unblocks_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end, ref_len))
                     else:
-                        other_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end))
+                        other_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end, ref_len))
                     #print(name)
 
     with open(out, "w") as o:
-        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tperc_id\tloci_overlap\tMux\tRef_start\tRef_end\n")
+        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tperc_id\tloci_overlap\tMux\tRef_start\tRef_end\tRef_len\n")
         for file_id, length_list in target_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
                         + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t"
-                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\n")
+                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\t" + str(len_entry[8]) + "\n")
         for file_id, length_list in unblocks_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
                         + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t"
-                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\n")
+                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\t" + str(len_entry[8]) + "\n")
         for file_id, length_list in other_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Other\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
                         + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t"
-                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\n")
+                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\t" + str(len_entry[8]) + "\n")
 
 
 if __name__ == "__main__":
