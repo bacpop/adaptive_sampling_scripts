@@ -9,6 +9,7 @@ import sys
 import os, glob
 import mappy as mp
 from Bio import SeqIO
+import numpy as np
 
 import argparse
 
@@ -108,13 +109,20 @@ def get_best_map(index, fasta, cutoff=0.7):
     return ref_dict
 
 def main():
-    options = get_options()
-    reference = options.ref
-    out = options.out
-    indir = options.indir
-    summary = options.summary
-    mux_period = options.mux_period
-    loci = options.loci
+    # options = get_options()
+    # reference = options.ref
+    # out = options.out
+    # indir = options.indir
+    # summary = options.summary
+    # mux_period = options.mux_period
+    # loci = options.loci
+
+    reference = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/data/cps/updated_cps.fasta"
+    out = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/test.txt"
+    indir = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/data/readfish_default_guppy_6_4_6/20230224_0957_MN25278_FAS37965_d64b9105"
+    summary = None
+    mux_period = 480
+    loci = None
 
     if summary is None:
         sum_list = glob.glob(os.path.join(indir, "sequencing_summary_*.txt"))
@@ -140,7 +148,7 @@ def main():
                 mux_set.add(read_id)
 
             # determine type of read
-            if unblock == "unblock_mux_change":
+            if unblock == "data_service_unblock_mux_change":
                 no_unblocks += 1
 
     print("Total unblocks: {}".format(str(no_unblocks)))
@@ -157,6 +165,9 @@ def main():
     target_reads_dict = defaultdict(list)
     unblocks_reads_dict = defaultdict(list)
     other_reads_dict = defaultdict(list)
+
+    ref_array_dict_target = {}
+    ref_array_dict_nontarget = {}
 
     for f in get_fq(indir):
         if f.endswith(".gz"):
@@ -175,6 +186,8 @@ def main():
         with fopen(f, "rt") as fh:
             for name, seq, _ in readfq(fh):
                 ref_align = None
+                coord_start = "NA"
+                coord_end = "NA"
                 perc_id = 0
                 matched_len = 0
                 overlap = 0
@@ -203,7 +216,6 @@ def main():
                             overlap = len(range(max(ref_start, coord_start), min(ref_end, coord_end)))
 
 
-
                 # check if in mux-period
                 mux = 0
                 if name in mux_set:
@@ -211,30 +223,33 @@ def main():
 
                 if name in unblock_dict:
                     if unblock_dict[name] == "signal_positive":
-                        target_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
+                        target_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end))
                     elif unblock_dict[name] == "data_service_unblock_mux_change":
-                        unblocks_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
+                        unblocks_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end))
                     else:
-                        other_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux))
+                        other_reads_dict[file_id].append((name, len(seq), ref_align, perc_id, overlap, mux, coord_start, coord_end))
                     #print(name)
 
     with open(out, "w") as o:
-        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tperc_id\tloci_overlap\tMux\n")
+        o.write("Type\tFilter\tBarcode\tRef\tLength\tName\tperc_id\tloci_overlap\tMux\tRef_start\tRef_end\n")
         for file_id, length_list in target_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
-                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t" + str(len_entry[5]) + "\n")
+                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t"
+                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\n")
         for file_id, length_list in unblocks_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
-                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t" + str(len_entry[5]) + "\n")
+                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t"
+                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\n")
         for file_id, length_list in other_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
                 o.write("Other\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[2]) + "\t" + str(len_entry[1])
-                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t" + str(len_entry[5]) + "\n")
+                        + "\t" + len_entry[0] + "\t" + str(len_entry[3]) + "\t" + str(len_entry[4]) + "\t"
+                        + str(len_entry[5]) + "\t" + str(len_entry[6]) + "\t" + str(len_entry[7]) + "\n")
 
 
 if __name__ == "__main__":
