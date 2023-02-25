@@ -34,6 +34,9 @@ def get_options():
     IO.add_argument('--ref',
                     default=None,
                     help='Specify minimap2 index. No alignment done if not specified. ')
+    IO.add_argument('--target',
+                    default=None,
+                    help='Specify target within minimap2 index. Default = None ')
     IO.add_argument('--loci',
                     default=None,
                     help='Loci to find in minimap2 index ')
@@ -116,6 +119,7 @@ def main():
     summary = options.summary
     mux_period = options.mux_period
     loci = options.loci
+    target = options.target
 
     if summary is None:
         sum_list = glob.glob(os.path.join(indir, "sequencing_summary_*.txt"))
@@ -159,9 +163,6 @@ def main():
     unblocks_reads_dict = defaultdict(list)
     other_reads_dict = defaultdict(list)
 
-    ref_array_dict_target = {}
-    ref_array_dict_nontarget = {}
-
     for f in get_fq(indir):
         if f.endswith(".gz"):
             fopen = gzip.open
@@ -188,6 +189,10 @@ def main():
                 if reference is not None:
                     # Map seq, take alignment with largest mlen
                     for r in mapper.map(seq):
+                        # if target defined, only look for those matches
+                        if target is not None:
+                            if r.ctg != target:
+                                continue
                         if r.mlen < matched_len:
                             continue
 
