@@ -40,6 +40,10 @@ def get_options():
     IO.add_argument('--loci',
                     default=None,
                     help='Loci to find in minimap2 index ')
+    IO.add_argument('--man',
+                    action="store_true",
+                    default=False,
+                    help='Manually basecalled. Default = False ')
     return parser.parse_args()
 
 def readfq(fp):  # this is a generator function
@@ -120,6 +124,7 @@ def main():
     mux_period = options.mux_period
     loci = options.loci
     target = options.target
+    manual_basecall = options.man
 
     if summary is None:
         sum_list = glob.glob(os.path.join(indir, "sequencing_summary_*.txt"))
@@ -137,7 +142,10 @@ def main():
         for line in f:
             entry = line.strip().split("\t")
             read_id = entry[4]
-            unblock = entry[23]
+            if manual_basecall:
+                unblock = entry[14]
+            else:
+                unblock = entry[23]
             unblock_dict[read_id] = unblock
 
             start_time = float(entry[9])
@@ -170,12 +178,18 @@ def main():
             fopen = open
 
         # get filename and extension
-        base = os.path.splitext(os.path.basename(f))[0].split("_")
-        #print(base)
-        if "barcode" in base[2]:
-            file_id = "_".join([base[1], base[2]])
+        if manual_basecall:
+            base = f.split("fastq_")[1].split("/")
+            if "barcode" in base[1]:
+                file_id = "_".join([base[0], base[1]])
+            else:
+                file_id = "_".join([base[0], "NA"])
         else:
-            file_id = "_".join([base[1], "NA"])
+            base = os.path.splitext(os.path.basename(f))[0].split("_")
+            if "barcode" in base[2]:
+                file_id = "_".join([base[1], base[2]])
+            else:
+                file_id = "_".join([base[1], "NA"])
 
         with fopen(f, "rt") as fh:
             for name, seq, _ in readfq(fh):
