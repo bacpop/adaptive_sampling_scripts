@@ -66,14 +66,10 @@ def readfq(fp):  # this is a generator function
                 break
 
 def main():
-    # options = get_options()
-    # out = options.out
-    # indir = options.indir
-    # old = options.old
-
-    out = "test2.txt"
-    indir = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/data/readfish_default_guppy_6_4_6/20230224_0957_MN25278_FAS37965_d64b9105"
-    old = False
+    options = get_options()
+    out = options.out
+    indir = options.indir
+    old = options.old
 
     target_reads_dict = defaultdict(list)
     unblocks_reads_dict = defaultdict(list)
