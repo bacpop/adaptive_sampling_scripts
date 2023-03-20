@@ -15,6 +15,10 @@ def get_options():
     IO.add_argument('--out',
                     default="result.txt",
                     help='Output file.')
+    IO.add_argument('--old',
+                    action="store_true",
+                    default=False,
+                    help='Use is running with old version (v5) of guppy.')
     return parser.parse_args()
 
 def get_fq(directory):
@@ -62,9 +66,14 @@ def readfq(fp):  # this is a generator function
                 break
 
 def main():
-    options = get_options()
-    out = options.out
-    indir = options.indir
+    # options = get_options()
+    # out = options.out
+    # indir = options.indir
+    # old = options.old
+
+    out = "test2.txt"
+    indir = "/mnt/c/Users/sth19/PycharmProjects/PhD_project/adaptive_sampling_scripts/data/readfish_default_guppy_6_4_6/20230224_0957_MN25278_FAS37965_d64b9105"
+    old = False
 
     target_reads_dict = defaultdict(list)
     unblocks_reads_dict = defaultdict(list)
@@ -79,9 +88,15 @@ def main():
         next(f)
         for line in f:
             entry = line.strip().split("\t")
-            read_id = entry[4]
-            unblock = entry[23]
-            unblock_dict[read_id] = unblock
+            if old:
+                read_id = entry[3]
+                unblock = entry[22]
+                channel = entry[5]
+            else:
+                read_id = entry[4]
+                unblock = entry[23]
+                channel = entry[6]
+            unblock_dict[read_id] = (unblock, channel)
 
 
     for f in get_fq(indir):
@@ -101,29 +116,33 @@ def main():
             for name, seq, _ in readfq(fh):
 
                 if name in unblock_dict:
-                    if unblock_dict[name] == "signal_positive":
-                        target_reads_dict[file_id].append((name, len(seq)))
-                    elif unblock_dict[name] == "data_service_unblock_mux_change":
-                        unblocks_reads_dict[file_id].append((name, len(seq)))
+                    unblock_tup = unblock_dict[name]
+                    if unblock_tup[0] == "signal_positive":
+                        target_reads_dict[file_id].append((name, len(seq), unblock_tup[1]))
+                    elif unblock_tup[1] == "data_service_unblock_mux_change":
+                        unblocks_reads_dict[file_id].append((name, len(seq), unblock_tup[1]))
                     else:
-                        other_reads_dict[file_id].append((name, len(seq)))
+                        other_reads_dict[file_id].append((name, len(seq), unblock_tup[1]))
                 else:
-                    other_reads_dict[file_id].append((name, len(seq)))
+                    other_reads_dict[file_id].append((name, len(seq), "NA"))
 
     with open(out, "w") as o:
-        o.write("Type\tFilter\tBarcode\tName\tLength\n")
+        o.write("Type\tFilter\tBarcode\tName\tLength\tChannel\n")
         for file_id, length_list in target_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
-                o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[0]) + "\t" + str(len_entry[1]) + "\n")
+                o.write("Target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[0]) + "\t" + str(len_entry[1]) + "\t" +
+                        str(len_entry[2]) + "\n")
         for file_id, length_list in unblocks_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
-                o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[0]) + "\t" + str(len_entry[1]) + "\n")
+                o.write("Non-target\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[0]) + "\t" + str(len_entry[1]) + "\t" +
+                        str(len_entry[2]) + "\n")
         for file_id, length_list in other_reads_dict.items():
             type = file_id.split("_")
             for len_entry in length_list:
-                o.write("Other\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[0]) + "\t" + str(len_entry[1]) + "\n")
+                o.write("Other\t" + type[0] + "\t" + type[1] + "\t" + str(len_entry[0]) + "\t" + str(len_entry[1]) + "\t" +
+                        str(len_entry[2]) + "\n")
 
 
 if __name__ == "__main__":
