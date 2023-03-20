@@ -115,7 +115,7 @@ def main():
                     unblock_tup = unblock_dict[name]
                     if unblock_tup[0] == "signal_positive":
                         target_reads_dict[file_id].append((name, len(seq), unblock_tup[1]))
-                    elif unblock_tup[1] == "data_service_unblock_mux_change":
+                    elif unblock_tup[0] == "data_service_unblock_mux_change":
                         unblocks_reads_dict[file_id].append((name, len(seq), unblock_tup[1]))
                     else:
                         other_reads_dict[file_id].append((name, len(seq), unblock_tup[1]))
