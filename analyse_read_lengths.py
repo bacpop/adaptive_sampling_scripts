@@ -18,7 +18,7 @@ def get_options():
     return parser.parse_args()
 
 def get_fq(directory):
-    types = ([".fastq"], [".fastq", ".gz"], [".fq"], [".fq", ".gz"])
+    types = ([".fastq", ".gz"], [".fq", ".gz"])
     files = (
         str(p.resolve()) for p in Path(directory).glob("**/*") if p.suffixes in types
     )
