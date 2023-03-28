@@ -44,6 +44,9 @@ def get_options():
 					action="store_true",
 					help='Align only pass reads.'
 						 'Default=False')
+	IO.add_argument('--t',
+					default=None,
+					help='Specify target within minimap2 index. Default = None ')
 	IO.add_argument('-q',
 					default=False,
 					action="store_true",
@@ -146,6 +149,7 @@ def main():
 	only_pass = options.b
 	verbose = options.v
 	gen_fastq = options.q
+	mm_target = options.t
 
 	# initialise results dictionaries
 	results_dict = {}
@@ -226,10 +230,18 @@ def main():
 					len_ref_map = abs(r.r_en - r.r_st)
 
 					# take as best alignment if matching length is longer
-					if match_len < r.mlen:
-						match_len = r.mlen
-						ref_align = r.ctg
-						perc_id = r.mlen / len_ref_map
+					if mm_target is None:
+						if match_len < r.mlen:
+							match_len = r.mlen
+							ref_align = r.ctg
+							perc_id = match_len / len_ref_map
+					# otherwise make sure read aligns to known target
+					else:
+						if r.ctg == mm_target:
+							match_len = r.mlen
+							ref_align = r.ctg
+							perc_id = match_len / len_ref_map
+							break
 
 				# add to read_seqs
 				if gen_fastq:
