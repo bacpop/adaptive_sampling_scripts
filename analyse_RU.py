@@ -44,7 +44,7 @@ def get_options():
 					action="store_true",
 					help='Align only pass reads.'
 						 'Default=False')
-	IO.add_argument('--t',
+	IO.add_argument('-t',
 					default=None,
 					help='Specify target within minimap2 index. Default = None ')
 	IO.add_argument('-q',
