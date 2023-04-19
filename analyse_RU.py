@@ -46,7 +46,7 @@ def get_options():
 						 'Default=False')
 	IO.add_argument('-t',
 					default=None,
-					help='Specify target within minimap2 index. Default = None ')
+					help='Specify targets within minimap2 index with comma separated list. Default = None ')
 	IO.add_argument('-q',
 					default=False,
 					action="store_true",
@@ -151,6 +151,10 @@ def main():
 	gen_fastq = options.q
 	mm_target = options.t
 
+	# split list of targets
+	if mm_target != None:
+		mm_target = set(mm_target.split(","))
+
 	# initialise results dictionaries
 	results_dict = {}
 	read_seqs = {"target" : {},
@@ -237,11 +241,11 @@ def main():
 							perc_id = match_len / len_ref_map
 					# otherwise make sure read aligns to known target
 					else:
-						if r.ctg == mm_target:
-							match_len = r.mlen
-							ref_align = r.ctg
-							perc_id = match_len / len_ref_map
-							break
+						if r.ctg in mm_target:
+							if match_len < r.mlen:
+								match_len = r.mlen
+								ref_align = r.ctg
+								perc_id = match_len / len_ref_map
 
 				# add to read_seqs
 				if gen_fastq:
