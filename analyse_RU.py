@@ -9,6 +9,7 @@ from pathlib import Path
 import argparse
 import gzip
 import os
+from random import choices
 
 def get_options():
 	description = "Aligns and determines enrichment factor"
@@ -57,6 +58,11 @@ def get_options():
 					action="store_true",
 					help='Verbose output.'
 						 'Default=False')
+	IO.add_argument('-bs',
+					default=100,
+					type=int,
+					help='Bootstrap sample size.'
+						 'Default=100')
 	return parser.parse_args()
 
 class ReferenceStats:
@@ -150,6 +156,7 @@ def main():
 	verbose = options.v
 	gen_fastq = options.q
 	mm_target = options.t
+	bootstrap_sample = options.bs
 
 	# split list of targets
 	if mm_target != None:
@@ -159,6 +166,7 @@ def main():
 	results_dict = {}
 	read_seqs = {"target" : {},
 				 "non-target" : {}}
+	read_lens = {}
 
 	mapper = mp.Aligner(reference, preset="map-ont")
 
@@ -198,6 +206,10 @@ def main():
 									 "ref_dict" : {}}
 			read_seqs["target"][barcode] = {}
 			read_seqs["non-target"][barcode] = {}
+			read_lens[barcode] = {}
+			read_lens[barcode]["adaptive"] = []
+			read_lens[barcode]["control"] = []
+
 			barcode_list.append(barcode)
 
 		with gzip.open(f, "rt") as handle:
@@ -247,6 +259,11 @@ def main():
 								ref_align = r.ctg
 								perc_id = match_len / len_ref_map
 
+				if target:
+					read_lens[barcode]["adaptive"].append((ref_align, len(seq)))
+				else:
+					read_lens[barcode]["control"].append((ref_align, len(seq)))
+
 				# add to read_seqs
 				if gen_fastq:
 					if ref_align not in read_seqs["target"][barcode]:
@@ -291,6 +308,59 @@ def main():
 
 				results_dict[barcode]["total_bases"] += length
 				results_dict[barcode]["total_reads"] += 1
+
+	# write bootstrapped sample file
+	bootstrapped_enrichment = {}
+	for barcode, channel_dict in read_lens.items():
+		bootstrapped_enrichment[barcode] = {}
+
+		adaptive_lens = channel_dict["adaptive"]
+		control_lens = channel_dict["control"]
+
+		# sample with replacement full dataset
+		for i in range(bootstrap_sample):
+			print(i)
+			adaptive_num_bases = {}
+			control_num_bases = {}
+			adaptive_sample = choices(adaptive_lens, k=len(adaptive_lens))
+			control_sample = choices(control_lens, k=len(control_lens))
+
+			adaptive_total_bases = 0
+			control_total_bases = 0
+
+			for read in adaptive_sample:
+				align, length = read
+				if align not in adaptive_num_bases:
+					adaptive_num_bases[align] = 0
+					control_num_bases[align] = 0
+				adaptive_num_bases[align] += length
+				adaptive_total_bases += length
+
+			for read in control_sample:
+				align, length = read
+				if align not in adaptive_num_bases:
+					adaptive_num_bases[align] = 0
+					control_num_bases[align] = 0
+				control_num_bases[align] += length
+				control_total_bases += length
+
+			# get bootstrap enrichment
+			for align in adaptive_num_bases.keys():
+				if align not in bootstrapped_enrichment[barcode]:
+					bootstrapped_enrichment[barcode][align] = []
+
+				if control_num_bases[align] == 0:
+					bootstrapped_enrichment[barcode][align].append("Inf")
+				else:
+					bootstrapped_enrichment[barcode][align].append((adaptive_num_bases[align] / adaptive_total_bases) /
+																   (control_num_bases[align] / control_total_bases))
+
+	with open(output + "_bootstrap.txt", "w") as o_boot:
+		o_boot.write("Barcode\tAlignment\tEnrichment\n")
+		for barcode, align_dict in bootstrapped_enrichment.items():
+			for align, len_list in align_dict.items():
+				for length in len_list:
+					o_boot.write("{}\t{}\t{}\n".format(barcode, align, length))
 
 	# write summary file
 	with open(output + "_summary.txt", "w") as o_sum:
