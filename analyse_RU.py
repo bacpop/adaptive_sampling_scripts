@@ -349,9 +349,10 @@ def main():
 				if align not in bootstrapped_enrichment[barcode]:
 					bootstrapped_enrichment[barcode][align] = []
 
+				# add one to avoid infinite value
 				if control_num_bases[align] == 0:
-					bootstrapped_enrichment[barcode][align].append("Inf")
-				elif adaptive_total_bases == 0:
+					control_num_bases[align] = 1
+				if adaptive_total_bases == 0:
 					bootstrapped_enrichment[barcode][align].append(0)
 				else:
 					bootstrapped_enrichment[barcode][align].append((adaptive_num_bases[align] / adaptive_total_bases) /
@@ -436,14 +437,10 @@ def main():
 			# calculate enrichment for all entries with mappings in target and non-target
 			for ref in enrichment_dict[barcode].keys():
 				if "Nontarget_bases_mapped" in enrichment_dict[barcode][ref] and "Target_prop_bases" in enrichment_dict[barcode][ref]:
-					if results_dict[barcode]["non_target_channel_bases"] > 0 and enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] > 0:
-						non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
-						enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
-					else:
-						if enrichment_dict[barcode][ref]["Target_prop_bases"] == 0:
-							enrichment = 0
-						else:
-							enrichment = "Inf"
+					if enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] == 0:
+						enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] = 1
+					non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
+					enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
 
 					o_sum.write("Enrichment\t{}\t{}\t{}\t{}\n".format("NA", str(barcode), ref, str(enrichment)))
 
