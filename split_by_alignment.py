@@ -124,7 +124,7 @@ def main():
 
     for f in get_fq(fastqDir):
         if only_pass:
-            if "/fastq_pass/" not in f:
+            if "pass/" not in f:
                 continue
 
         # only run on gzipped files
