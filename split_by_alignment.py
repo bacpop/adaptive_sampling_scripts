@@ -9,7 +9,6 @@ from pathlib import Path
 import argparse
 import gzip
 import os
-from random import choices
 
 def get_options():
     description = "Aligns and determines enrichment factor"
@@ -52,6 +51,11 @@ def get_options():
                     default=False,
                     action="store_true",
                     help='Verbose output.'
+                         'Default=False')
+    IO.add_argument('--manual',
+                    default=False,
+                    action="store_true",
+                    help='Basecalling done manually.'
                          'Default=False')
     return parser.parse_args()
 
@@ -108,6 +112,7 @@ def main():
     only_pass = options.pass_only
     verbose = options.v
     mm_target = options.target
+    manual = options.manual
 
     # split list of targets
     if mm_target != None:
@@ -152,8 +157,12 @@ def main():
             for entry in input_sequences:
                 fields, seq = entry.description, str(entry.seq)
                 fields = fields.split()
-                channel = int(fields[3].split("=")[1])
-                assert (fields[3].split("=")[0] == "ch")
+                if manual:
+                    channel = int(fields[4].split("=")[1])
+                    assert (fields[4].split("=")[0] == "ch")
+                else:
+                    channel = int(fields[3].split("=")[1])
+                    assert (fields[3].split("=")[0] == "ch")
                 assert (channel >= 0 and channel <= 512)
 
                 # determine is read is in target channel
