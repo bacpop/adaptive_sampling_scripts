@@ -20,6 +20,10 @@ def get_options():
                     action="store_true",
                     default=False,
                     help='Generate separate fasta files of cut and remaining sequences. ')
+    IO.add_argument('--cutonly',
+                    action="store_true",
+                    default=False,
+                    help='Only output cut sequences, ignore remaining sequence. Default = False ')
     IO.add_argument('--cutoff',
                     type=float,
                     default=0.7,
@@ -57,7 +61,7 @@ def get_best_map(index, fasta, cutoff):
 
     return best_hit
 
-def cut_loci(infiles, in_fasta, separate, cutoff, outpref):
+def cut_loci(infiles, in_fasta, separate, cutonly, cutoff, outpref):
     file_list = []
 
     count_dict = {}
@@ -89,34 +93,40 @@ def cut_loci(infiles, in_fasta, separate, cutoff, outpref):
                     pre_remainder = sequence[:best_map[2]]
                     post_remainder = sequence[best_map[3]:]
 
-                    rem_records.append(SeqRecord(Seq(pre_remainder), id=id + "_precut_" + best_map[0],
-                                             description=fasta.description))
+                    if not cutonly:
+                        rem_records.append(SeqRecord(Seq(pre_remainder), id=id + "_precut_" + best_map[0],
+                                                 description=fasta.description))
+
                     # print to separate files
-                    if separate:
+                    if separate or cutonly:
                         cut_records.append(SeqRecord(Seq(cut), id=id + "_" + best_map[0],
                                                  description=fasta.description))
                     else:
                         rem_records.append(SeqRecord(Seq(cut), id=id + "_cut_" + best_map[0],
                                                  description=fasta.description))
 
-                    rem_records.append(SeqRecord(Seq(post_remainder), id=id + "_postcut_" + best_map[0],
-                                             description=fasta.description))
+                    if not cutonly:
+                        rem_records.append(SeqRecord(Seq(post_remainder), id=id + "_postcut_" + best_map[0],
+                                                 description=fasta.description))
                 else:
-                    rem_records.append(SeqRecord(fasta.seq, id=fasta.id,
-                                             description=fasta.description))
+                    if not cutonly:
+                        rem_records.append(SeqRecord(fasta.seq, id=fasta.id,
+                                                 description=fasta.description))
 
-            SeqIO.write(rem_records, out_pref + "_rem.fa", "fasta")
-            if separate:
+            if not cutonly:
+                SeqIO.write(rem_records, out_pref + "_rem.fa", "fasta")
+            if separate or cutonly:
                 SeqIO.write(cut_records, out_pref + "_cut.fa", "fasta")
         # if no match, copy and save as rem
         else:
-            rem_records = []
+            if not cutonly:
+                rem_records = []
 
-            fasta_sequences = SeqIO.parse(open(file), 'fasta')
-            for fasta in fasta_sequences:
-                rem_records.append(SeqRecord(fasta.seq, id=fasta.id,
-                                             description=fasta.description))
-            SeqIO.write(rem_records, out_pref + "_nocut.fa", "fasta")
+                fasta_sequences = SeqIO.parse(open(file), 'fasta')
+                for fasta in fasta_sequences:
+                    rem_records.append(SeqRecord(fasta.seq, id=fasta.id,
+                                                 description=fasta.description))
+                SeqIO.write(rem_records, out_pref + "_nocut.fa", "fasta")
 
 
     # print output files
@@ -162,12 +172,13 @@ def main():
     infiles = options.infiles
     query = options.query
     separate = options.separate
+    cutonly = options.cutonly
     cutoff = options.cutoff
     count = options.count
     outpref = options.outpref
 
     if not count:
-        cut_loci(infiles, query, separate, cutoff, outpref)
+        cut_loci(infiles, query, separate, cutonly, cutoff, outpref)
     else:
         count_loci(infiles, outpref)
 
