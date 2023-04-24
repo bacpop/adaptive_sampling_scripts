@@ -141,16 +141,17 @@ def main():
         # get filename and extension
         base = os.path.splitext(os.path.basename(f))[0].split("_")
         # print(base)
-        if "barcode" in base[2]:
-            barcode = base[2]
-        else:
-            barcode = "NA"
+        if not manual:
+            if "barcode" in base[2]:
+                barcode = base[2]
+            else:
+                barcode = "NA"
 
-        if barcode not in read_seqs:
-            read_seqs["adaptive"][barcode] = {}
-            read_seqs["control"][barcode] = {}
+            if barcode not in read_seqs:
+                read_seqs["adaptive"][barcode] = {}
+                read_seqs["control"][barcode] = {}
 
-            barcode_list.append(barcode)
+                barcode_list.append(barcode)
 
         with gzip.open(f, "rt") as handle:
             input_sequences = SeqIO.parse(handle, 'fastq')
@@ -160,6 +161,13 @@ def main():
                 if manual:
                     channel = int(fields[4].split("=")[1])
                     assert (fields[4].split("=")[0] == "ch")
+                    barcode = fields[-1].split("=")[1]
+
+                    if barcode not in read_seqs:
+                        read_seqs["adaptive"][barcode] = {}
+                        read_seqs["control"][barcode] = {}
+
+                        barcode_list.append(barcode)
                 else:
                     channel = int(fields[3].split("=")[1])
                     assert (fields[3].split("=")[0] == "ch")
