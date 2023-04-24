@@ -351,6 +351,8 @@ def main():
 
 				if control_num_bases[align] == 0:
 					bootstrapped_enrichment[barcode][align].append("Inf")
+				elif adaptive_total_bases == 0:
+					bootstrapped_enrichment[barcode][align].append(0)
 				else:
 					bootstrapped_enrichment[barcode][align].append((adaptive_num_bases[align] / adaptive_total_bases) /
 																   (control_num_bases[align] / control_total_bases))
