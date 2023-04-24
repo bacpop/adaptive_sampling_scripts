@@ -319,7 +319,7 @@ def main():
 
 		# sample with replacement full dataset
 		for i in range(bootstrap_sample):
-			print(i)
+			#print(i)
 			adaptive_num_bases = {}
 			control_num_bases = {}
 			adaptive_sample = choices(adaptive_lens, k=len(adaptive_lens))
