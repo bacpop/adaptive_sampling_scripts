@@ -147,7 +147,7 @@ def main():
             else:
                 barcode = "NA"
 
-            if barcode not in read_seqs:
+            if barcode not in read_seqs["adaptive"]:
                 read_seqs["adaptive"][barcode] = {}
                 read_seqs["control"][barcode] = {}
 
@@ -163,7 +163,7 @@ def main():
                     assert (fields[4].split("=")[0] == "ch")
                     barcode = fields[-1].split("=")[1]
 
-                    if barcode not in read_seqs:
+                    if barcode not in read_seqs["adaptive"]:
                         read_seqs["adaptive"][barcode] = {}
                         read_seqs["control"][barcode] = {}
 
