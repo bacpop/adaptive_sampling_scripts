@@ -352,6 +352,9 @@ def main():
 				# add one to avoid infinite value
 				if control_num_bases[align] == 0:
 					control_num_bases[align] = 1
+				if control_total_bases == 0:
+					control_total_bases = 1
+
 				if adaptive_total_bases == 0:
 					bootstrapped_enrichment[barcode][align].append(0)
 				else:
