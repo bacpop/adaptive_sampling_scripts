@@ -442,6 +442,9 @@ def main():
 				if "Nontarget_bases_mapped" in enrichment_dict[barcode][ref] and "Target_prop_bases" in enrichment_dict[barcode][ref]:
 					if enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] == 0:
 						enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] = 1
+					if results_dict[barcode]["non_target_channel_bases"] == 0:
+						results_dict[barcode]["non_target_channel_bases"] = 1
+
 					non_target_prop_bases = enrichment_dict[barcode][ref]["Nontarget_bases_mapped"] / results_dict[barcode]["non_target_channel_bases"]
 					enrichment = enrichment_dict[barcode][ref]["Target_prop_bases"] / non_target_prop_bases
 
