@@ -259,10 +259,18 @@ def main():
 								ref_align = r.ctg
 								perc_id = match_len / len_ref_map
 
+				# if below cutoff, or removing multialigning reads, set reference as unaligned
+				if perc_id < matching_prop:
+					ref_align = "unaligned"
+				if remove_multi and align_count > 1:
+					ref_align = "unaligned"
+
+				length = len(seq)
+
 				if target:
-					read_lens[barcode]["adaptive"].append((ref_align, len(seq)))
+					read_lens[barcode]["adaptive"].append((ref_align, length))
 				else:
-					read_lens[barcode]["control"].append((ref_align, len(seq)))
+					read_lens[barcode]["control"].append((ref_align, length))
 
 				# add to read_seqs
 				if gen_fastq:
@@ -274,14 +282,6 @@ def main():
 						read_seqs["target"][barcode][ref_align].append((readName, perc_id, seq))
 					else:
 						read_seqs["non-target"][barcode][ref_align].append((readName, perc_id, seq))
-
-				# if below cutoff, or removing multialigning reads, set reference as unaligned
-				if perc_id < matching_prop:
-					ref_align = "unaligned"
-				if remove_multi and align_count > 1:
-					ref_align = "unaligned"
-
-				length = len(seq)
 
 				if ref_align not in results_dict[barcode]["ref_dict"]:
 					results_dict[barcode]["ref_dict"][ref_align] = {"target_channel_bases": 0,
@@ -358,6 +358,8 @@ def main():
 				if adaptive_total_bases == 0:
 					bootstrapped_enrichment[barcode][align].append(0)
 				else:
+					#adaptive_prop = adaptive_num_bases[align] / adaptive_total_bases
+					#control_prop = control_num_bases[align] / control_total_bases
 					bootstrapped_enrichment[barcode][align].append((adaptive_num_bases[align] / adaptive_total_bases) /
 																   (control_num_bases[align] / control_total_bases))
 
