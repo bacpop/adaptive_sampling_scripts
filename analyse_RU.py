@@ -265,7 +265,9 @@ def main():
 				if remove_multi and align_count > 1:
 					ref_align = "unaligned"
 
-				length = len(seq)
+				#length = len(seq)
+				# take length as alignment length
+				length = match_len
 
 				if target:
 					read_lens[barcode]["adaptive"].append((ref_align, length))
