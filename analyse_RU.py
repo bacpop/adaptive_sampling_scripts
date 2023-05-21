@@ -265,14 +265,17 @@ def main():
 				if remove_multi and align_count > 1:
 					ref_align = "unaligned"
 
-				#length = len(seq)
-				# take length as alignment length
-				length = match_len
 
+				# take length as alignment length
+				total_length = len(seq)
+				if ref_align == "unaligned":
+					match_len = total_length
+
+				# take length as alignment length
 				if target:
-					read_lens[barcode]["adaptive"].append((ref_align, length))
+					read_lens[barcode]["adaptive"].append((ref_align, match_len))
 				else:
-					read_lens[barcode]["control"].append((ref_align, length))
+					read_lens[barcode]["control"].append((ref_align, match_len))
 
 				# add to read_seqs
 				if gen_fastq:
@@ -292,23 +295,23 @@ def main():
 																	"non_target_channel_reads" : 0}
 
 				if target:
-					results_dict[barcode]["target_channel_bases"] += length
+					results_dict[barcode]["target_channel_bases"] += total_length
 					results_dict[barcode]["target_channel_reads"] += 1
-					results_dict[barcode]["ref_dict"][ref_align]["target_channel_bases"] += length
+					results_dict[barcode]["ref_dict"][ref_align]["target_channel_bases"] += match_len
 					results_dict[barcode]["ref_dict"][ref_align]["target_channel_reads"] += 1
 					if ref_align != "unaligned":
-						results_dict[barcode]["target_channel_bases_mapped"] += length
+						results_dict[barcode]["target_channel_bases_mapped"] += match_len
 						results_dict[barcode]["target_channel_reads_mapped"] += 1
 				else:
-					results_dict[barcode]["non_target_channel_bases"] += length
+					results_dict[barcode]["non_target_channel_bases"] += total_length
 					results_dict[barcode]["non_target_channel_reads"] += 1
-					results_dict[barcode]["ref_dict"][ref_align]["non_target_channel_bases"] += length
+					results_dict[barcode]["ref_dict"][ref_align]["non_target_channel_bases"] += match_len
 					results_dict[barcode]["ref_dict"][ref_align]["non_target_channel_reads"] += 1
 					if ref_align != "unaligned":
-						results_dict[barcode]["non_target_channel_bases_mapped"] += length
+						results_dict[barcode]["non_target_channel_bases_mapped"] += match_len
 						results_dict[barcode]["non_target_channel_reads_mapped"] += 1
 
-				results_dict[barcode]["total_bases"] += length
+				results_dict[barcode]["total_bases"] += total_length
 				results_dict[barcode]["total_reads"] += 1
 
 	# write bootstrapped sample file
