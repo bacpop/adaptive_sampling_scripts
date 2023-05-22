@@ -273,9 +273,9 @@ def main():
 
 				# take length as alignment length
 				if target:
-					read_lens[barcode]["adaptive"].append((ref_align, match_len))
+					read_lens[barcode]["adaptive"].append((ref_align, match_len, total_length))
 				else:
-					read_lens[barcode]["control"].append((ref_align, match_len))
+					read_lens[barcode]["control"].append((ref_align, match_len, total_length))
 
 				# add to read_seqs
 				if gen_fastq:
@@ -334,20 +334,20 @@ def main():
 			control_total_bases = 0
 
 			for read in adaptive_sample:
-				align, length = read
+				align, match_len, read_len = read
 				if align not in adaptive_num_bases:
 					adaptive_num_bases[align] = 0
 					control_num_bases[align] = 0
-				adaptive_num_bases[align] += length
-				adaptive_total_bases += length
+				adaptive_num_bases[align] += match_len
+				adaptive_total_bases += read_len
 
 			for read in control_sample:
-				align, length = read
+				align, match_len, read_len = read
 				if align not in adaptive_num_bases:
 					adaptive_num_bases[align] = 0
 					control_num_bases[align] = 0
-				control_num_bases[align] += length
-				control_total_bases += length
+				control_num_bases[align] += match_len
+				control_total_bases += read_len
 
 			# get bootstrap enrichment
 			for align in adaptive_num_bases.keys():
