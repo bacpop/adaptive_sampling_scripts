@@ -18,10 +18,12 @@ def get_options():
                     required=True,
                     help='Alignment index')
     IO.add_argument('--id',
+                    type=float,
                     default=0.75,
                     help='Minimum identity for bifrost alignment. Default = 0.75')
     IO.add_argument('--min-len',
                     default=50,
+                    type=int,
                     help='Minimum length for bifrost alignment. Default = 50')
     IO.add_argument('--aligner',
                     required=True,
