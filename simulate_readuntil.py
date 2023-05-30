@@ -41,7 +41,7 @@ def time_alignment(mapper, infile, aligner, id, min_len):
 
     file_entries = SeqIO.parse(open(infile), 'fasta')
     for entry in file_entries:
-        sequence = entry.seq
+        sequence = str(entry.seq)
 
         if aligner == "bifrost":
             t0 = timer()
