@@ -70,7 +70,7 @@ def main():
     infile = options.infile
     out = options.out
     index = options.index
-    aligner = options.aliger
+    aligner = options.aligner
     id = options.id
     min_len = options.min_len
 
