@@ -43,13 +43,12 @@ def time_alignment(mapper, infile, aligner, id, min_len):
     for entry in file_entries:
         sequence = str(entry.seq)
 
-        if aligner == "bifrost":
+        if aligner == "graph":
             t0 = timer()
             if len(sequence) < min_len:
                 rejections += 1
             else:
                 result = mapper.map_read(sequence)
-
                 if result < id:
                     rejections += 1
             t1 = timer()
