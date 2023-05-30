@@ -66,8 +66,8 @@ def split_simulated(input_file, out_prefix, name_dict, min_overlap):
         else:
             nontarget_file.append(entry)
 
-    SeqIO.write(target_file, out_prefix + "_target.fastq", "fasta")
-    SeqIO.write(nontarget_file, out_prefix + "_nontarget.fastq", "fasta")
+    SeqIO.write(target_file, out_prefix + "_target.fasta", "fasta")
+    SeqIO.write(nontarget_file, out_prefix + "_nontarget.fasta", "fasta")
 
 def main():
     options = get_options()

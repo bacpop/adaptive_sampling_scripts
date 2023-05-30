@@ -19,11 +19,9 @@ def get_options():
                     help='Alignment index')
     IO.add_argument('--id',
                     default=0.75,
-                    required=True,
                     help='Minimum identity for bifrost alignment. Default = 0.75')
     IO.add_argument('--min-len',
                     default=50,
-                    required=True,
                     help='Minimum length for bifrost alignment. Default = 50')
     IO.add_argument('--aligner',
                     required=True,
@@ -84,7 +82,7 @@ def main():
 
     time_list, rejections = time_alignment(mapper, infile, aligner, id, min_len)
 
-    print("Input file: {}\nRejections: {}".format(infile, str(rejections)))
+    print("Output file: {}\nRejections: {}".format(out, str(rejections)))
 
     with open(out, "w") as f:
         f.writelines(time_list)
