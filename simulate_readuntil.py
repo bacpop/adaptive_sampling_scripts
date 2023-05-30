@@ -86,7 +86,8 @@ def main():
     print("Output file: {}\nRejections: {}".format(out, str(rejections)))
 
     with open(out, "w") as f:
-        f.writelines(time_list)
+        for t in time_list:
+            f.write(str(t) + "\n")
 
     return 0
 
