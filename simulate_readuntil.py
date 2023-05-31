@@ -34,6 +34,13 @@ def get_options():
                     help='Output prefix')
     return parser.parse_args()
 
+# determine if iterable is empy
+def peek(iterable):
+    try:
+        first = next(iterable)
+    except StopIteration:
+        return False
+    return True
 
 def time_alignment(mapper, infile, aligner, id, min_len):
     time_list = []
@@ -42,25 +49,24 @@ def time_alignment(mapper, infile, aligner, id, min_len):
     file_entries = SeqIO.parse(open(infile), 'fasta')
     for entry in file_entries:
         sequence = str(entry.seq)
+        reject = 0
+
+        # time alignment only
+        t0 = timer()
+        result = mapper.map_read(sequence)
+        t1 = timer()
 
         if aligner == "graph":
-            t0 = timer()
-            if len(sequence) < min_len:
+            if len(sequence) < min_len or result < id:
+                reject = 1
                 rejections += 1
-            else:
-                result = mapper.map_read(sequence)
-                if result < id:
-                    rejections += 1
-            t1 = timer()
+        else:
+            if not peek(result):
+                reject = 1
+                rejections += 1
             time_list.append(t1 - t0)
 
-        else:
-            t0 = timer()
-            results = mapper.map_read(sequence)
-            if not results:
-                rejections += 1
-            t1 = timer()
-            time_list.append(t1 - t0)
+        time_list.append(((t1 - t0), len(sequence), reject))
 
     return time_list, rejections
 
@@ -86,8 +92,10 @@ def main():
     print("Output file: {}\nRejections: {}".format(out, str(rejections)))
 
     with open(out, "w") as f:
-        for t in time_list:
-            f.write(str(t) + "\n")
+        f.write("Time\tSeq_len\tRejection\n")
+        for entry in time_list:
+            time, length, reject = entry
+            f.write(str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
 
     return 0
 
