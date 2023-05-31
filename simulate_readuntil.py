@@ -118,10 +118,10 @@ def main():
         f.write("Tool\tTime\tSeq_len\tRejection\n")
         for entry in time_list_graph:
             time, length, reject = entry
-            f.write("Graph" + str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
+            f.write("Graph\t" + str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
         for entry in time_list_mappy:
             time, length, reject = entry
-            f.write("Mappy" + str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
+            f.write("Mappy\t" + str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
 
     return 0
 
