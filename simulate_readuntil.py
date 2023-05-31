@@ -47,7 +47,7 @@ def peek(iterable):
         return False
     return True
 
-def time_alignment(graph_index, mappy_index, infile, aligner, id, min_len, avg_poi):
+def time_alignment(graph_index, mappy_index, infile, id, min_len, avg_poi):
     time_list_graph = []
     rejections_graph = 0
     time_list_mappy = []
