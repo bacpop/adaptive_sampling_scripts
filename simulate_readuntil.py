@@ -77,7 +77,6 @@ def time_alignment(mapper, infile, aligner, id, min_len, avg_poi):
             if not peek(result):
                 reject = 1
                 rejections += 1
-            time_list.append(t1 - t0)
 
         time_list.append(((t1 - t0), len(sequence), reject))
 
