@@ -3,6 +3,7 @@ from ru.basecall import Mapper as MappyMapper
 from ru.graphalign.bifrost_mapper import Mapper as GraphMapper
 from Bio import SeqIO
 from timeit import default_timer as timer
+import numpy as np
 
 
 def get_options():
@@ -25,6 +26,11 @@ def get_options():
                     default=50,
                     type=int,
                     help='Minimum length for bifrost alignment. Default = 50')
+    IO.add_argument('--avg-poi',
+                    default=180,
+                    type=int,
+                    help='Average for random poisson sampling of reads for alignment. '
+                         'Default = 180')
     IO.add_argument('--aligner',
                     required=True,
                     choices=["mappy", "graph"],
@@ -42,14 +48,21 @@ def peek(iterable):
         return False
     return True
 
-def time_alignment(mapper, infile, aligner, id, min_len):
+def time_alignment(mapper, infile, aligner, id, min_len, avg_poi):
     time_list = []
     rejections = 0
 
     file_entries = SeqIO.parse(open(infile), 'fasta')
     for entry in file_entries:
-        sequence = str(entry.seq)
+        raw_sequence = str(entry.seq)
         reject = 0
+
+        # sample from poisson, add one to avoid zero values
+        read_end = np.random.poisson(avg_poi) + 1
+        if read_end > len(raw_sequence):
+            sequence = raw_sequence
+        else:
+            sequence = raw_sequence[0:read_end]
 
         # time alignment only
         t0 = timer()
@@ -78,6 +91,7 @@ def main():
     aligner = options.aligner
     id = options.id
     min_len = options.min_len
+    avg_poi = options.avg_poi
 
     if aligner == "mappy":
         mapper = MappyMapper(index)
@@ -87,7 +101,7 @@ def main():
     if mapper.initialised:
         print("{} initialised".format(aligner))
 
-    time_list, rejections = time_alignment(mapper, infile, aligner, id, min_len)
+    time_list, rejections = time_alignment(mapper, infile, aligner, id, min_len, avg_poi)
 
     print("Output file: {}\nRejections: {}".format(out, str(rejections)))
 
