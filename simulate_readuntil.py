@@ -15,9 +15,12 @@ def get_options():
     IO.add_argument('--infile',
                     required=True,
                     help='Input fasta file')
-    IO.add_argument('--index',
+    IO.add_argument('--graph-index',
                     required=True,
-                    help='Alignment index')
+                    help='Graph .gfa index')
+    IO.add_argument('--mappy-index',
+                    required=True,
+                    help='Mappy .mmi index')
     IO.add_argument('--id',
                     type=float,
                     default=0.75,
@@ -31,10 +34,6 @@ def get_options():
                     type=int,
                     help='Average for random poisson sampling of reads for alignment. '
                          'Default = 180')
-    IO.add_argument('--aligner',
-                    required=True,
-                    choices=["mappy", "graph"],
-                    help='Choice of aligner. Either mappy or graph.')
     IO.add_argument('--out',
                     default="parsed",
                     help='Output prefix')
@@ -48,14 +47,25 @@ def peek(iterable):
         return False
     return True
 
-def time_alignment(mapper, infile, aligner, id, min_len, avg_poi):
-    time_list = []
-    rejections = 0
+def time_alignment(graph_index, mappy_index, infile, aligner, id, min_len, avg_poi):
+    time_list_graph = []
+    rejections_graph = 0
+    time_list_mappy = []
+    rejections_mappy = 0
+
+    mappy_mapper = MappyMapper(mappy_index)
+    if mappy_mapper.initialised:
+        print("mappy initialised")
+
+    graph_mapper = GraphMapper(graph_index)
+    if graph_mapper.initialised:
+        print("graph initialised")
 
     file_entries = SeqIO.parse(open(infile), 'fasta')
     for entry in file_entries:
         raw_sequence = str(entry.seq)
-        reject = 0
+        mappy_reject = 0
+        graph_reject = 0
 
         # sample from poisson, add one to avoid zero values
         read_end = np.random.poisson(avg_poi) + 1
@@ -64,51 +74,54 @@ def time_alignment(mapper, infile, aligner, id, min_len, avg_poi):
         else:
             sequence = raw_sequence[0:read_end]
 
-        # time alignment only
+        # time alignment only for mappy
         t0 = timer()
-        result = mapper.map_read(sequence)
+        mappy_result = mappy_mapper.map_read(sequence)
         t1 = timer()
 
-        if aligner == "graph":
-            if len(sequence) < min_len or result < id:
-                reject = 1
-                rejections += 1
-        else:
-            if not peek(result):
-                reject = 1
-                rejections += 1
+        if not peek(mappy_result):
+            mappy_reject = 1
+            rejections_mappy += 1
 
-        time_list.append(((t1 - t0), len(sequence), reject))
+        time_list_mappy.append(((t1 - t0), len(sequence), mappy_reject))
 
-    return time_list, rejections
+        # repeat for graph
+        t0 = timer()
+        graph_result = graph_mapper.map_read(sequence)
+        t1 = timer()
+
+        if len(sequence) < min_len or graph_result < id:
+            graph_reject = 1
+            rejections_graph += 1
+
+        time_list_graph.append(((t1 - t0), len(sequence), graph_reject))
+
+
+    return time_list_graph, rejections_graph, time_list_mappy, rejections_mappy
 
 def main():
     options = get_options()
     infile = options.infile
     out = options.out
-    index = options.index
-    aligner = options.aligner
+    graph_index = options.graph_index
+    mappy_index = options.mappy_index
     id = options.id
     min_len = options.min_len
     avg_poi = options.avg_poi
 
-    if aligner == "mappy":
-        mapper = MappyMapper(index)
-    else:
-        mapper = GraphMapper(index)
+    time_list_graph, rejections_graph, time_list_mappy, rejections_mappy = time_alignment(graph_index, mappy_index, infile, id, min_len, avg_poi)
 
-    if mapper.initialised:
-        print("{} initialised".format(aligner))
-
-    time_list, rejections = time_alignment(mapper, infile, aligner, id, min_len, avg_poi)
-
-    print("Output file: {}\nRejections: {}".format(out, str(rejections)))
+    print("Output file: {}\n Mappy Rejections: {}".format(out, str(rejections_mappy)))
+    print("Output file: {}\n Graph Rejections: {}".format(out, str(rejections_graph)))
 
     with open(out, "w") as f:
-        f.write("Time\tSeq_len\tRejection\n")
-        for entry in time_list:
+        f.write("Tool\tTime\tSeq_len\tRejection\n")
+        for entry in time_list_graph:
             time, length, reject = entry
-            f.write(str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
+            f.write("Graph" + str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
+        for entry in time_list_mappy:
+            time, length, reject = entry
+            f.write("Mappy" + str(time) + "\t" + str(length) + "\t" + str(reject) + "\n")
 
     return 0
 
