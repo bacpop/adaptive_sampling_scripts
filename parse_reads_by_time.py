@@ -93,9 +93,9 @@ def main():
 
 		channel_type = "NA"
 
-		if "adaptive" in f:
+		if "adaptive" in os.path.basename(f):
 			channel_type = "adaptive"
-		elif "control" in f:
+		elif "control" in os.path.basename(f):
 			channel_type = "control"
 		
 		for entry in tqdm(SeqIO.parse(open(f),"fastq"), total=num_entries):
