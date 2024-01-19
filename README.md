@@ -11,4 +11,13 @@ To use analyse_RU.py, direct it to a read directory containing `fastq_pass` and 
 python analyse_RU.py -f /path/to/read/directory/ -p 0.84 -o /output/prefix -i /path/to/reference.fasta -t "23F,19A,19F"
 ```
 
+This will generate a `_summary.txt` file containing statistics about read mapping and yield, and `_bootstrap.txt`, which contains bootstrap enrichment calculations (change number of bootstrap samples with `-bs`)
+
+### split_by_channel.py
+
 split_by_channel.py can be used to split reads into two separated files depending on specified channel. For use when adaptive sampling has been used on some but not all channels.
+
+Run with:
+```
+python split_by_channel.py --infile /path/to/reads.fastq --out /output/prefix --channels 1-256
+```
