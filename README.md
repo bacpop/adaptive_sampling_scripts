@@ -34,6 +34,17 @@ python analyse_coverage.py -f /path/to/read/directory/ -p 0.84 -o output/prefix 
 
 This will output a `X_adaptive_hist.csv` (for channels specified by `-c`) and `X_control_hist.csv` (for all other channels) for each barcode, which details the coverage at each position in the reference. `X` specifies which reference was been aligned to. Additionally, a `_summary.txt` file detailing total bases aligning and the average coverage to each reference sequence is generated.
 
+### analyse_read_lengths.py
+
+`analyse_read_lengths.py` generates an output file summarising read lengths from a sequencing run.
+
+Run with:
+```
+python analyse_read_lengths.py --indir /path/to/read/directory/ --out /output/filename"
+```
+
+This generates a file detailing the read length of all reads along with their barcode, channel, and whether they passed quality filtering.
+
 ### split_by_channel.py
 
 `split_by_channel.py` can be used to split reads into two separated files depending on specified channel. For use when adaptive sampling has been used on some but not all channels.
