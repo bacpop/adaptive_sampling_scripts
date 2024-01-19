@@ -36,7 +36,7 @@ This will output a `X_adaptive_hist.csv` (for channels specified by `-c`) and `X
 
 ### analyse_read_lengths.py
 
-`analyse_read_lengths.py` generates an output file summarising read lengths from a sequencing run.
+`analyse_read_lengths.py` generates an output file summarising read lengths from a sequencing run. It can be used to analyse simulated runs from bulk recordings.
 
 Run with:
 ```
@@ -44,6 +44,21 @@ python analyse_read_lengths.py --indir /path/to/read/directory/ --out /output/fi
 ```
 
 This generates a file detailing the read length of all reads along with their barcode, channel, and whether they passed quality filtering.
+
+### analyse_unblocks.py
+
+`analyse_unblocks.py` aligns reads to a given reference and parses their length. It can be used to analyse simulated runs from bulk recordings.
+
+Run with:
+```
+python split_by_channel.py --indir /path/to/read/directory/ --out /output/filename --ref /path/to/reference.fasta --target "23F" --loci /path/to/locus.fasta --mux-period 480
+```
+
+To specify which sequence(s) the `reference.fasta` to align to, use the `--target` flag using a comman separated list as above. The names must match fasta headers in the `reference.fasta` file.
+
+If you have loci of interest within the `reference.fasta`, you can separately supply it to `--loci` in fasta format. These will be aligned to the reference, and the coordinates used in read mapping to assign reads at correctly mapping to or missing the locus.
+
+To ignore reads from the start of the run e.g. during the mux period, specify using `--mux-period` (in seconds).
 
 ### split_by_channel.py
 
