@@ -113,6 +113,32 @@ python parse_reads_by_time.py --dir /path/to/reads/directory --output /output/pr
 
 This will generate `_time_X.fastq` for each file in the `--dir`, where X defines the time break number.
 
+### simulate_readuntil.py
+
+`simulate_readuntil.py` compares the time taken to align reads to a [Bifrost](https://github.com/pmelsted/bifrost) and [Minimap2](https://github.com/lh3/minimap2) index.
+
+First install Minimap2 and the [graph alignment](https://github.com/samhorsfield96/readfish/releases/tag/GraphAlignment%2Fv0.0.1) branch of readfish.
+
+Then, generate Bifrost and Minimap2 indexes:
+
+```
+minimap2 -d index.mmi /path/to/input.fasta
+ru_generate_graph --refs /path/to/reference/input.txt --kmer 19 --out index
+```
+
+Finally run with:
+```
+python simulate_readuntil.py --infile /path/to/reads.fasta --mappy-index index.mmi --graph-index index.gfa --id 0.75 --min-len 50 --out output_file.txt --avg-poi 180
+```
+
+`--infile` is a path to the reads to be aligned. `--mappy-index` and `--graph-index` are the indexes generated above. `--id` and `--min-len` control the cutoff of to graph pseudoalignment identity and minimum read length respectively. `--avg-poi` defines the average length taken from the start of each read during alignment to the index to mimic the process of NAS.
+
+This will output `output_file.txt`, which has for columns:
+- The tool used (Graph or Mappy)
+- Time taken for alignment
+- Fragment length aligned
+- Whether the read was rejected (1) or not (0)
+
 ### split_by_channel.py
 
 `split_by_channel.py` can be used to split reads into two separated files depending on specified channel. For use when adaptive sampling has been used on some but not all channels.
