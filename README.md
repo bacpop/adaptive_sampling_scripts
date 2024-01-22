@@ -47,7 +47,7 @@ python analyse_read_lengths.py --indir /path/to/read/directory/ --out /output/fi
 
 This generates a file detailing the read length of all reads along with their barcode, channel, and whether they passed quality filtering.
 
-## Parsing sequencings
+## Parsing sequences
 
 ### split_by_channel.py
 
