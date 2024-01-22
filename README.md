@@ -113,6 +113,28 @@ python parse_reads_by_time.py --dir /path/to/reads/directory --output /output/pr
 
 This will generate `_time_X.fastq` for each file in the `--dir`, where X defines the time break number.
 
+### split_simulated.py
+
+`split_simulated.py` is used to parse simulated reads based on their place of origin for use in `simulate_readuntil.py`.
+
+First generate simulated reads using [NanoSim-H](https://github.com/karel-brinda/NanoSim-H)
+
+```
+nanosim-h-train -i /path/to/training.fasta /path/to/reference/genome.fasta output_dir
+nanosim-h -n 500000 -p output_dir /path/to/reference_genome.fasta
+```
+
+This will generated `simulated.fa`, which details where each read was generated from in `reference_genome.fasta` in terms of locus
+
+Then parse reads based on their position with:
+```
+python split_simulated.py --infile /path/to/simulated.fa --names "Genome_X" --pos 0-1000 --min-overlap 50 --out parsed_simulated
+```
+
+`--names` defines the header of the specific sequence in `reference_genome.fasta` to be used as a reference. `--pos` defines the locus to split reads generated from that region. `--min-overlap` defines how small of an overlap is required between the locus defined in `--pos` and the read for the read to be parsed.
+
+This will output `parsed_simulated_target.fasta` (true positive reads) containing reads generated from the locus of interest, and `parsed_simulated_nontarget.fasta` (true negative reads) for all others.
+
 ### simulate_readuntil.py
 
 `simulate_readuntil.py` compares the time taken to align reads to a [Bifrost](https://github.com/pmelsted/bifrost) and [Minimap2](https://github.com/lh3/minimap2) index.
@@ -131,7 +153,9 @@ Finally run with:
 python simulate_readuntil.py --infile /path/to/reads.fasta --mappy-index index.mmi --graph-index index.gfa --id 0.75 --min-len 50 --out output_file.txt --avg-poi 180
 ```
 
-`--infile` is a path to the reads to be aligned. `--mappy-index` and `--graph-index` are the indexes generated above. `--id` and `--min-len` control the cutoff of to graph pseudoalignment identity and minimum read length respectively. `--avg-poi` defines the average length taken from the start of each read during alignment to the index to mimic the process of NAS.
+`--infile` is a path to the reads to be aligned. Usually they would have been simulated and parsed using `split_simulated.py` above.
+
+`--mappy-index` and `--graph-index` are the indexes generated above. `--id` and `--min-len` control the cutoff of to graph pseudoalignment identity and minimum read length respectively. `--avg-poi` defines the average length taken from the start of each read during alignment to the index to mimic the process of NAS.
 
 This will output `output_file.txt`, which has for columns:
 - The tool used (Graph or Mappy)
@@ -168,3 +192,4 @@ python split_by_channel.py --infile /path/to/reads.fastq --out /output/prefix --
 ```
 
 This will output `target.fastq` for reads from the stipulated channels, and `nontarget.fastq` for all others.
+
