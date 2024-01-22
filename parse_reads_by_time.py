@@ -18,7 +18,7 @@ from Bio import SeqIO
 def get_options():
 	description = "Splits reads in fastq files based on run time."
 	parser = argparse.ArgumentParser(description=description,
-									 prog='python analyse_RU.py')
+									 prog='python parse_reads_by_time.py')
 	IO = parser.add_argument_group('Input/options.out')
 	IO.add_argument('--dir',
 					type=str,

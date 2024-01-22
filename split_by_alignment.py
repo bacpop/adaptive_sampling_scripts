@@ -11,9 +11,9 @@ import gzip
 import os
 
 def get_options():
-    description = "Aligns and determines enrichment factor"
+    description = "Parses reads based on alignment to reference(s)"
     parser = argparse.ArgumentParser(description=description,
-                                     prog='python analyse_RU.py')
+                                     prog='python split_by_alignment.py')
     IO = parser.add_argument_group('Input/options.out')
     IO.add_argument('--indir',
                     required=True,

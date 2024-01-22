@@ -4,9 +4,9 @@ import argparse
 import re
 
 def get_options():
-    description = "Splits fastq files by channel"
+    description = "Splits simulated fastq files from NanoSim-H by reference origin"
     parser = argparse.ArgumentParser(description=description,
-                                     prog='python split_by_channel.py')
+                                     prog='python split_simulated.py')
 
     IO = parser.add_argument_group('Input/options.out')
     IO.add_argument('--infile',

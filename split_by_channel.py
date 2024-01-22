@@ -4,7 +4,7 @@ import argparse
 import statistics
 
 def get_options():
-    description = "Splits fastq files by channel"
+    description = "Splits fastq files channel"
     parser = argparse.ArgumentParser(description=description,
                                      prog='python split_by_channel.py')
 
