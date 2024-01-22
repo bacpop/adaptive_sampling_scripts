@@ -1,5 +1,13 @@
 # adaptive_sampling_scripts
-Scripts for adaptive sampling analysis
+Scripts and data for adaptive sampling analysis
+
+## Data
+
+- `data/cps/Clusters` directory: contains CBL sequences clusterd by scheme in [Mavroidi et al.] (https://pubmed.ncbi.nlm.nih.gov/17766424/).
+- `data/cps/Sequences` directory: genomes for pnuemococcal strains used frequently during analysis.
+- `data/cps/split_cps` directory: reference sequences for CBL.
+- `data/cps/updated_cps.fasta`: file containing up-to-date sequences for all known CBL (as of Decemeber 19th 2022)
+- `data/cps/README.md`: Details of sources for all CBL sequences within `data/cps/updated_cps.fasta`.
 
 ## Analysing adaptive sampling performance
 
