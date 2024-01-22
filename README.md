@@ -60,6 +60,42 @@ If you have loci of interest within the `reference.fasta`, you can separately su
 
 To ignore reads from the start of the run e.g. during the mux period, specify using `--mux-period` (in seconds).
 
+### kmer_simulation.R
+
+`kmer_simulation.R` is an R script set up to simulate error-prone reads from a target and non-target genome and determine the sensitity and specificity of pseudoalignment using different read lengths (`read.lengths` variable), mutation rates (`mu.rates` variable) and k-mer lengths (`kmer.sizes` variable). 
+
+This script will automatically generate plots describing:
+- pseudoalignment sensitivity (`kmer_mu_comp_readlen` plot)
+- pseudoalignment specificity (`kmer_random_match_readlen` plot)
+- effect of identity cut-off (`kmer_cutoff_mu` plot)
+- Reciever operator curve (`ROC_len` plot)
+- Concordance between estimated and real read identity (`mash_mu_concordance` plot)
+- RMSE between estimate and real read identity (`RMSE_mash` plot)
+
+To avoid rerunning simulations, k-mer sequences are placed in `all_simulations.csv` and `all_cutoffs.csv` for re-generating plots.
+
+### loci_cutter.py
+
+`loci_cutter.py` aligns a database containing loci of interest to individual genomes and 'cuts' it out, generating `fasta` files containing the locus and the remainder of the genome.
+
+Run with:
+```
+python loci_cutter --infile /path/to/infile.txt --query /path/to/locus.fasta --cutoff 0.7 --outpref /output/prefix --separate --count
+```
+
+`--infile` is a list of file paths to `fasta` files containing sequences from which to cut loci from (one path per line). 
+
+`--query` is a `fasta` file containing the loci to align and cut.
+
+`--cutoff` defines the minimum identity between the input sequence and an aligned locus to cut.
+
+`--separate` places the cut loci and remaining sequence in different files, otherwise placed in the same file.
+
+`--count` generates an output file detailing the number of each loci in `--query` found in the `fasta` within `--infile`.
+
+
+This will generate `_cut.fa` which contains the locus, and `_rem.fa` which is the remainder of the sequence. If no locus is found, the sequence will be generated as `_nocut.fas` 
+
 ### split_by_channel.py
 
 `split_by_channel.py` can be used to split reads into two separated files depending on specified channel. For use when adaptive sampling has been used on some but not all channels.
