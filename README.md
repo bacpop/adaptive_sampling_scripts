@@ -110,7 +110,7 @@ This will generate `fastq` files for each of the references specified to `--targ
 
 Run with:
 ```
-python loci_cutter --infile /path/to/infile.txt --query /path/to/locus.fasta --cutoff 0.7 --outpref /output/prefix --separate --count
+python loci_cutter.py --infile /path/to/infile.txt --query /path/to/locus.fasta --cutoff 0.7 --outpref /output/prefix --separate --count
 ```
 
 `--infile` is a list of file paths to `fasta` files containing sequences from which to cut loci from (one path per line). 
@@ -148,7 +148,7 @@ To avoid rerunning simulations, k-mer sequences are placed in `all_simulations.c
 
 Run with:
 ```
-python split_by_channel.py --indir /path/to/read/directory/ --out /output/filename --ref /path/to/reference.fasta --target "23F" --loci /path/to/locus.fasta --mux-period 480
+python analyse_unblocks.py --indir /path/to/read/directory/ --out /output/filename --ref /path/to/reference.fasta --target "23F" --loci /path/to/locus.fasta --mux-period 480
 ```
 
 To specify which sequence(s) the `reference.fasta` to align to, use the `--target` flag using a comman separated list as above. The names must match fasta headers in the `reference.fasta` file.
