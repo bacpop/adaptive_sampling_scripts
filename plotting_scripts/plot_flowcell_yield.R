@@ -23,7 +23,7 @@ all.total.df <- read.xlsx(filename, "bases_total",)
 #df$Mixture <- gsub('PMEN1-23F', 'Spn23F', df$Mixture, fixed = TRUE)
 
 experiments <- unique(all.mapped.df$Experiment)
-i <- 5
+i <- 6
 
 for (i in 1:length(experiments))
 {
@@ -144,7 +144,7 @@ for (i in 1:length(experiments))
   
   if (e == "Mixed culture Full CBL database")
   {
-    aligned.bases <- subset(subsample, Alignment == "23F")
+    aligned.bases <- subset(subsample, Alignment != "Total" & Alignment != "unaligned")
     
     aligned.bases$Aligner[aligned.bases$Aligner == "Minimap2"] <- "Minimap2"
     aligned.bases$Aligner[aligned.bases$Aligner == "GP (k=19, S=90%, min. read=50 bp)"] <- "Graph k19 (S=90%)"

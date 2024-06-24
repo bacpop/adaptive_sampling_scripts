@@ -5,7 +5,7 @@ library(tidyverse)
 indir = "./enrichment_analysis/bootstrapped_enrichment_alignment_only/all_summaries_manuscript/"
 summary_files <- Sys.glob(paste(indir,"*_summary.txt", sep = ""))
 
-
+i <- 1
 for (i in 1:length(summary_files))
 {
   summary.Experiment <- summary_files[i]
@@ -13,6 +13,8 @@ for (i in 1:length(summary_files))
   
   Experiment <- gsub("_all_summary.txt", "", gsub(".*/", "", summary.Experiment))
   summary.df$Experiment <- Experiment
+  summary.df$ENA_Accession <- NA
+  summary.df$Barcode[is.na(summary.df$Barcode)] <- "Unclassified"
   
   # Experiment datasets
   if (Experiment == "CPS_23F_fulldb_V14_400T_graphk19_p75" | Experiment == "CPS_23F_fulldb_V14_400T_minimap2" | Experiment == "CPS_23F_remclust2_V14_400T_graphk19_p75" | Experiment == "CPS_23F_remclust2_V14_400T_graphk19_p90" | Experiment == "CPS_23F_remclust2_V14_400T_minimap2_rep2")
@@ -44,9 +46,31 @@ for (i in 1:length(summary_files))
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode11"] <- 0.1
     summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode12"] <- "E. coli DH5a + Spn23F"
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode12"] <- 0.5
+    
+    if (Experiment == "CPS_23F_fulldb_V14_400T_graphk19_p75")
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213904"
+    }
+    else if (Experiment == "CPS_23F_fulldb_V14_400T_minimap2") 
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213903"
+    }
+    else if (Experiment == "CPS_23F_remclust2_V14_400T_graphk19_p75")
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213901"
+    }
+    else if (Experiment == "CPS_23F_remclust2_V14_400T_graphk19_p90")
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213902"
+    }
+    else if (Experiment == "CPS_23F_remclust2_V14_400T_minimap2_rep2")
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213900"
+    }
       
   } else if (Experiment == "23F_WGS_WGS_v_CPS" | Experiment == "23F_CPS_WGS_v_CPS_23F_only")
   {
+    
     # change barcode Experiments
     summary.df.temp <- subset(summary.df, Barcode != "barcode01" & Barcode != "barcode02" & Barcode != "barcode03" & Barcode != "barcode04" & Barcode != "barcode05" & Barcode != "barcode06" & Barcode != "barcode07" & Barcode != "barcode08" & Barcode != "barcode09" & Barcode != "barcode10" & Barcode != "barcode11" & Barcode != "barcode12")
     summary.df.temp$Mixture <- NA
@@ -76,12 +100,28 @@ for (i in 1:length(summary_files))
     summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode24"] <- "E. coli DH5a + Spn23F"
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode24"] <- 0.5
     
+    if (Experiment == "23F_WGS_WGS_v_CPS")
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213898"
+    }
+    else if (Experiment == "23F_CPS_WGS_v_CPS_23F_only") 
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213899"
+    }
     
   } else if (Experiment == "23F_WGS_size_selection" | Experiment == "23F_WGS_wo_size_selection")
   {
-    summary.df.temp <- subset(summary.df, Barcode != "barcode01" & Barcode != "barcode02" & Barcode != "barcode03" & Barcode != "barcode04")
+    summary.df.temp <- summary.df
     summary.df.temp$Mixture <- NA
     summary.df.temp$Concentration <- 0
+    summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode01"] <- "09B1145 only"
+    summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode01"] <- 0
+    summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode02"] <- "09B10203 only"
+    summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode02"] <- 0
+    summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode03"] <- "PCV-C-0897-1 only"
+    summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode03"] <- 0
+    summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode04"] <- "PCV-C-1014-1 only"
+    summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode04"] <- 0
     summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode05"] <- "M. catarrhalis + H. influenzae  + Spn23F"
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode05"] <- 0.5
     summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode06"] <- "M. catarrhalis + H. influenzae + Spn23F"
@@ -123,6 +163,14 @@ for (i in 1:length(summary_files))
     summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode24"] <- "S. pneumoniae 110.58 + Spn23F"
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode24"] <- 0.001
     
+    if (Experiment == "23F_WGS_size_selection")
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213895"
+    }
+    else if (Experiment == "23F_WGS_wo_size_selection") 
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213894"
+    }
 
     #summary.df.temp$Concentration <- summary.df.temp$Concentration * 100
     
@@ -204,10 +252,46 @@ for (i in 1:length(summary_files))
     
     summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode12"] <- "GPSC622 + GPSC16-23F"
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode12"] <- 0.5
+    
+    if (Experiment == "CPS_w_size_selection")
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213897"
+    }
+    else if (Experiment == "CPS_wo_size_selection") 
+    {
+      summary.df.temp$ENA_Accession <- "ERS18213896"
+    }
+    
   } else if (Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75")
   {
     #remove specific barcodes
     summary.df.temp <- subset(summary.df, Barcode != "barcode07" & Barcode != "barcode08" &  Barcode != "barcode09" & Barcode != "barcode10" & Barcode != "barcode11" &  Barcode != "barcode12" &Barcode != "barcode13" & Barcode != "barcode14" & Barcode != "barcode15" & Barcode != "barcode16" & Barcode != "barcode17" & Barcode != "barcode18" & Barcode != "barcode19" & Barcode != "barcode20" & Barcode != "barcode21" & Barcode != "barcode22" & Barcode != "barcode23" & Barcode != "barcode24")
+    
+    h <- hash()
+    
+    h[["barcode01"]] <- c("23F", "unaligned", "Total")
+    h[["barcode02"]] <- c("23F")
+    h[["barcode03"]] <- c("18C", "18B", "18F", "23F", "23A", "unaligned", "Total")
+    h[["barcode04"]] <-  c("23F", "unaligned", "Total")
+    h[["barcode05"]] <- c("19F", "23F", "unaligned", "Total")
+    h[["barcode06"]] <- c("19A", "23F", "unaligned", "Total")
+    
+    summary.df.temp.temp <- data.frame(matrix(nrow = 0, ncol = ncol(summary.df.temp)))
+    names(summary.df.temp.temp) <- names(summary.df.temp)
+    
+    
+    for (barcode in barcodes)
+    {
+      subsample.summary <- subset(summary.df.temp, Barcode == barcode & Alignment %in% h[[barcode]])
+      
+      # ignore non-expected barcodes
+      if (nrow(subsample.summary) != 0)
+      {
+        summary.df.temp.temp <- rbind(summary.df.temp.temp, subsample.summary)
+      }
+    }
+    
+    summary.df.temp <- summary.df.temp.temp
     
     summary.df.temp$Mixture <- NA
     summary.df.temp$Concentration <- 0
@@ -223,6 +307,8 @@ for (i in 1:length(summary_files))
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode05"] <- 0.1
     summary.df.temp$Mixture[summary.df.temp$Barcode == "barcode06"] <- "Sample 4 (PCV-C-0720-1) + Spn23F"
     summary.df.temp$Concentration[summary.df.temp$Barcode == "barcode06"] <- 0.1
+    
+    summary.df.temp$ENA_Accession <- "ERS18213905"
   }
   
   if (i > 1)
@@ -233,7 +319,7 @@ for (i in 1:length(summary_files))
   }
 }
 
-test <- subset(summary.df.final, Experiment == "CPS_wo_size_selection")
+test <- subset(summary.df.final, Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75")
 
 summary.df.final$Target <- NA
 summary.df.final$Aligner <- NA
@@ -318,11 +404,13 @@ summary.df.final$Chemistry[summary.df.final$Experiment == "CPS_23F_remclust2_V14
 summary.df.final$Experiment[summary.df.final$Experiment == "CPS_23F_remclust2_V14_400T_graphk19_p75"] <- "Partial CBL database"
 
 #Mixed culture full database graph s75
-summary.df.final$Target[summary.df.final$Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75"] <- "23F CBL"
+summary.df.final$Target[summary.df.final$Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75"] <- "Multi-CBL"
 summary.df.final$Aligner[summary.df.final$Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75"] <- "GP (k=19, S=75%, min. read=50 bp)"
 summary.df.final$Library[summary.df.final$Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75"] <- "Unselected"
 summary.df.final$Chemistry[summary.df.final$Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75"] <- "V14"
 summary.df.final$Experiment[summary.df.final$Experiment == "Mixed_23F_fulldb_V14_400T_graphk19_p75"] <- "Mixed culture Full CBL database"
+
+test <- subset(summary.df.final, Experiment == "Mixed culture Full CBL database")
 
 # # CBL graph vs. minimap
 # summary.df.final$Target[summary.df.final$Experiment == "23F_CPS_WGS_v_CPS_graph_k31_p90_c50"] <- "CBL"
@@ -337,7 +425,7 @@ summary.df.final$Experiment <- factor(summary.df.final$Experiment, levels = c("S
 summary.df.final$Library <- factor(summary.df.final$Library, levels = c("Unselected", "Size-selected"))
 summary.df.final$Target <- factor(summary.df.final$Target, levels = c("Spn23F Whole Genome", "23F CBL", "Multi-CBL" ))
 summary.df.final$Aligner <- factor(summary.df.final$Aligner, levels = c("Minimap2", "GP (k=19, S=75%, min. read=50 bp)", "GP (k=19, S=90%, min. read=50 bp)"))
-summary.df.final$Alignment <- factor(summary.df.final$Alignment, levels = c("03", "06B", "19A", "19F", "23F", "Spn23F", "unaligned", "Total"))
+summary.df.final$Alignment <- factor(summary.df.final$Alignment, levels = c("03", "06B", "18B", "18C", "18F", "19A", "19F", "23A", "23F", "Spn23F", "unaligned", "Total"))
 
 summary.df.final$Concentration <- summary.df.final$Concentration * 100
 operon.length <- 18654
@@ -345,7 +433,7 @@ genome.length <- 2221315
 perc.genome <- operon.length / genome.length
 
 summary.df.final$Concentration[summary.df.final$Target == "23F CBL"] <- summary.df.final$Concentration[summary.df.final$Target == "23F CBL"] * perc.genome
-summary.df.final$Concentration[summary.df.final$Target == "Multi-CBL"] <- summary.df.final$Concentration[summary.df.final$Target == "23F CBL"] * perc.genome
+summary.df.final$Concentration[summary.df.final$Target == "Multi-CBL"] <- summary.df.final$Concentration[summary.df.final$Target == "Multi-CBL"] * perc.genome
 summary.df.final$Concentration <- signif(summary.df.final$Concentration, 1)
 summary.df.final$Channel[summary.df.final$Channel == "Target"] <- "Adaptive"
 summary.df.final$Channel[summary.df.final$Channel == "Non-target"] <- "Control"
@@ -353,42 +441,63 @@ summary.df.final$Statistic <- gsub("_", " ", summary.df.final$Statistic)
 
 names(summary.df.final)[names(summary.df.final) == "Concentration"] <- "Concentration_perc"
 
-# reorder tables
+read.mapped <- subset(summary.df.final, summary.df.final$Statistic == "Reads mapped")
+read.mapped <- read.mapped %>% 
+  rename(
+    Reads_mapped = Value
+  )
+read.total <- subset(summary.df.final, summary.df.final$Statistic == "Reads total")
+read.total <- read.total %>% 
+  rename(
+    Reads_total = Value
+  )
 bases.mapped <- subset(summary.df.final, summary.df.final$Statistic == "Bases mapped")
-bases.mapped <- bases.mapped[order(bases.mapped[,6], bases.mapped[,11], bases.mapped[,1],  bases.mapped[,3], bases.mapped[,4], bases.mapped[,2]),]
-bases.mapped <- bases.mapped[,c(6, 7, 8, 9, 10, 11, 2, 3, 4, 5)]
 bases.mapped <- bases.mapped %>% 
   rename(
     Bases_mapped = Value
   )
-
 bases.total <- subset(summary.df.final, summary.df.final$Statistic == "Bases total")
-bases.total <- bases.total[order(bases.total[,6], bases.total[,11], bases.total[,1],  bases.total[,3], bases.total[,4], bases.total[,2]),]
-bases.total <- bases.total[,c(6, 7, 8, 9, 10, 11, 2, 3, 4, 5)]
 bases.total <- bases.total %>% 
   rename(
     Bases_total = Value
   )
 
-read.mapped <- subset(summary.df.final, summary.df.final$Statistic == "Reads mapped")
-read.mapped <- read.mapped[order(read.mapped[,6], read.mapped[,11], read.mapped[,1],  read.mapped[,3], read.mapped[,4], read.mapped[,2]),]
-read.mapped <- read.mapped[,c(6, 7, 8, 9, 10, 11, 2, 3, 4, 5)]
-read.mapped <- read.mapped %>% 
-  rename(
-    Reads_mapped = Value
-  )
+drop <- c("Bases_mapped","Reads_mapped", "Reads_total", "Bases_total","Statistic.x", "Statistic.y")
+read.len.mapped <- merge(bases.mapped, read.mapped, by= c("Channel", "Barcode", "Alignment", "Experiment", "ENA_Accession", "Mixture", "Concentration_perc", "Target", "Aligner","Library", "Chemistry" ))
+read.len.mapped$Avg_read_length <- read.len.mapped$Bases_mapped / read.len.mapped$Reads_mapped
+read.len.mapped = read.len.mapped[,!(names(read.len.mapped) %in% drop)]
+read.len.mapped$Avg_read_length <- round(read.len.mapped$Avg_read_length)
+read.len.mapped$Avg_read_length[is.nan(read.len.mapped$Avg_read_length)] <- 0
 
-read.total <- subset(summary.df.final, summary.df.final$Statistic == "Reads total")
-read.total <- read.total[order(read.total[,6], read.total[,11], read.total[,1],  read.total[,3], read.total[,4], read.total[,2]),]
-read.total <- read.total[,c(6, 7, 8, 9, 10, 11, 2, 3, 4, 5)]
-read.total <- read.total %>% 
-  rename(
-    Reads_total = Value
-  )
+read.len.total <- merge(bases.total, read.total, by= c("Channel", "Barcode", "Alignment", "Experiment", "ENA_Accession", "Mixture", "Concentration_perc", "Target", "Aligner","Library", "Chemistry"))
+read.len.total$Avg_read_length <- read.len.total$Bases_total / read.len.total$Reads_total
+read.len.total = read.len.total[,!(names(read.len.total) %in% drop)]
+read.len.total$Avg_read_length <- round(read.len.total$Avg_read_length)
+read.len.total$Avg_read_length[is.nan(read.len.total$Avg_read_length)] <- 0
+
+# reorder tables
+bases.mapped <- bases.mapped[order(bases.mapped[,6], bases.mapped[,12], bases.mapped[,3],  bases.mapped[,12], bases.mapped[,4], bases.mapped[,2]),]
+bases.mapped <- bases.mapped[,c(6, 13, 7, 8, 9, 10, 11, 12, 2, 3, 4, 5)]
+
+bases.total <- bases.total[order(bases.total[,6], bases.total[,12], bases.total[,3],  bases.total[,12], bases.total[,4], bases.total[,2]),]
+bases.total <- bases.total[,c(6, 13, 7, 8, 9, 10, 11, 12, 2, 3, 4, 5)]
+
+read.mapped <- read.mapped[order(read.mapped[,6], read.mapped[,12], read.mapped[,3],  read.mapped[,12], read.mapped[,4], read.mapped[,2]),]
+read.mapped <- read.mapped[,c(6, 13, 7, 8, 9, 10, 11, 12, 2, 3, 4, 5)]
+
+read.total <- read.total[order(read.total[,6], read.total[,12], read.total[,3],  read.total[,12], read.total[,4], read.total[,2]),]
+read.total <- read.total[,c(6, 13, 7, 8, 9, 10, 11, 12, 2, 3, 4, 5)]
+
+read.len.mapped <- read.len.mapped[order(read.len.mapped[,4], read.len.mapped[,10],  read.len.mapped[,2], read.len.mapped[,3], read.len.mapped[,1]),]
+read.len.mapped <- read.len.mapped[,c(4, 11, 5, 6, 7, 8, 9, 10, 1, 2, 3, 12)]
+
+read.len.total <- read.len.total[order(read.len.total[,4], read.len.total[,10],  read.len.total[,2], read.len.total[,3], read.len.total[,1]),]
+read.len.total <- read.len.total[,c(4, 11, 5, 6, 7, 8, 9, 10, 1, 2, 3, 12)]
+
 
 enrichment <- subset(summary.df.final, summary.df.final$Statistic == "Enrichment")
-enrichment <- enrichment[order(enrichment[,6], enrichment[,11], enrichment[,1],  enrichment[,3], enrichment[,4], enrichment[,2]),]
-enrichment <- enrichment[,c(6, 7, 8, 9, 10, 11, 3, 4, 5)]
+enrichment <- enrichment[order(enrichment[,6], enrichment[,12], enrichment[,1],  enrichment[,3], enrichment[,4], enrichment[,2]),]
+enrichment <- enrichment[,c(6, 7, 8, 9, 10, 11, 12, 3, 4, 5)]
 enrichment <- enrichment %>% 
   rename(
     Enrichment = Value
@@ -399,12 +508,17 @@ addWorksheet(wb, "bases_mapped")
 addWorksheet(wb, "bases_total")
 addWorksheet(wb, "reads_mapped")
 addWorksheet(wb, "reads_total")
+addWorksheet(wb, "read_len_mapped")
+addWorksheet(wb, "read_len_total")
 addWorksheet(wb, "enrichment")
+
 
 writeData(wb, "bases_mapped", bases.mapped, startRow = 1, startCol = 1)
 writeData(wb, "bases_total", bases.total, startRow = 1, startCol = 1)
 writeData(wb, "reads_mapped", read.mapped, startRow = 1, startCol = 1)
 writeData(wb, "reads_total", read.total, startRow = 1, startCol = 1)
+writeData(wb, "read_len_mapped", read.len.mapped, startRow = 1, startCol = 1)
+writeData(wb, "read_len_total", read.len.total, startRow = 1, startCol = 1)
 writeData(wb, "enrichment", enrichment, startRow = 1, startCol = 1)
 
 saveWorkbook(wb, file = "run_metadata.xlsx", overwrite = TRUE)

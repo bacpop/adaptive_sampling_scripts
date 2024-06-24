@@ -10,6 +10,7 @@ library(hash)
 library("plotrix")
 library(scales)
 library(ggh4x)
+library(svglite)
 
 scientific_10 <- function(x) {
   parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
@@ -42,6 +43,8 @@ if (experiment == "V14_CPS_graph_remclust2")
   indir = "./enrichment_analysis/bootstrapped_enrichment_alignment_only/V12_v_V14/"
 } else if (experiment == "Mixed_V14"){
   indir = "./enrichment_analysis/bootstrapped_enrichment_alignment_only/V14_Mixed_graph_fulldb/"
+} else if (experiment == "Mixed_V14_all_CBL"){
+  indir = "./enrichment_analysis/bootstrapped_enrichment_alignment_only/V14_Mixed_graph_fulldb_all_CBL/"
 }
 
 bootstrap_files <- Sys.glob(paste(indir,"*_bootstrap.txt", sep = ""))
@@ -49,8 +52,6 @@ params <- gsub("_bootstrap.txt", "", gsub(".*/", "", bootstrap_files))
 summary_files <- Sys.glob(paste(indir,"*_summary.txt", sep = ""))
 
 #target <- "FM211187.1"
-target <- c("23F", "FM211187.1")
-
 h <- hash()
 
 if (experiment == "V12_CPS")
@@ -67,8 +68,21 @@ if (experiment == "V12_CPS")
   h[["barcode10"]] <- c("23F", "06B")
   h[["barcode11"]] <- c("23F", "19F")
   h[["barcode12"]] <- c("23F")
+} else if (experiment == "Mixed_V14_all_CBL") {
+  target <- c("01","02","03","04","05","06A","06B","06D","07A","07B","07C","07F","08","09A","09L",
+              "09N","09V","10A","10B","10C","10F","11A","11B","11C","11D","11F","12A","12B","12F",
+              "13","15A","15B","15C","15F","16A","16F","17F","18A","18B","18C","18F","19A","19B",
+              "19C","19F","21","22A","23A","24B","24F","25A","25F","27","28A","28F","29","31","32F",
+              "33A","33B","33C","33D","34","35A","35B","35C","37","39","40","41A","41F","42","43","44",
+              "45","46","47A","47F","48","06E","19AF","35D","20B","24C","06G","06F","11E","06H","22F",
+              "14","17A","23B1","23B","24A","32A","33F","35F","36","38","06C","23F","15D","07D","10D","20A","10X")
+  h[["barcode03"]] <- c("18C", "18B", "18F", "23F", "23A")
+  h[["barcode04"]] <-  c("23F")
+  h[["barcode05"]] <- c("19F", "23F")
+  h[["barcode06"]] <- c("19A", "23F")
 } else {
   # set up dictionary for WGS
+  target <- c("23F", "FM211187.1")
   h[["barcode01"]] <- target
   h[["barcode02"]] <- target
   h[["barcode03"]] <- target
@@ -97,6 +111,7 @@ if (experiment == "V12_CPS")
 
 target.df <- data.frame(Run = c(), Barcode = c(), Alignment = c(), Enrichment = c(), Type = c())
 
+i <- 1
 for (i in 1:length(bootstrap_files))
 {
   filename <- bootstrap_files[i]
@@ -657,6 +672,50 @@ if (experiment == "V14_CPS_graph_fulldb" | experiment == "V14_CPS_graph_remclust
   target.df$Contaminant_species <- factor(target.df$Contaminant_species, levels = c("Sample 1", "Sample 2", "Sample 3", "Sample 4", "Pneumo R6"))
   
   target.df$Concentration[target.df$Run != "Whole Genome"] <- target.df$Concentration[target.df$Run != "Whole Genome"] * perc.genome
+} else if (experiment == "Mixed_V14_all_CBL")
+{
+  target.df$Size.Type <- NA
+  
+  target.df$Size.Type[target.df$Run == "Mixed_23F_fulldb_V14_400T_graphk19_p75_all_CBL_all"] <- "Unselected"
+  
+  target.df$Size.Type <- factor(target.df$Size.Type, levels = c("Unselected"))
+  
+  #remove specific barcodes
+  target.df <- subset(target.df, (Size.Type == "Unselected" & (Barcode != "barcode07" & Barcode != "barcode08" &  Barcode != "barcode09" & Barcode != "barcode10" & Barcode != "barcode11" &  Barcode != "barcode12" &Barcode != "barcode13" & Barcode != "barcode14" & Barcode != "barcode15" & Barcode != "barcode16" & Barcode != "barcode17" & Barcode != "barcode18" & Barcode != "barcode19" & Barcode != "barcode20" & Barcode != "barcode21" & Barcode != "barcode22" & Barcode != "barcode23" & Barcode != "barcode24")) | 
+                        (Size.Type == "Size-selected" & (Barcode != "barcode01" & Barcode != "barcode02" & Barcode != "barcode05" & Barcode != "barcode06" & Barcode != "barcode07" & Barcode != "barcode08" & Barcode != "barcode09" & Barcode != "barcode10" & Barcode != "barcode11" & Barcode != "barcode12" & Barcode != "barcode13" & Barcode != "barcode14" & Barcode != "barcode15" & Barcode != "barcode16" & Barcode != "barcode17" & Barcode != "barcode18" & Barcode != "barcode19" & Barcode != "barcode20" & Barcode != "barcode21" & Barcode != "barcode22" & Barcode != "barcode23" & Barcode != "barcode24")))
+  
+  target.df$Contaminant <- NA
+  target.df$Contaminant_species <- NA
+  target.df$Concentration <- 0
+  target.df$Contaminant <- NA
+  target.df$Contaminant_species <- NA
+  target.df$Concentration <- 0
+  target.df$Concentration[target.df$Barcode == "barcode02"] <- 0.5
+  target.df$Contaminant[target.df$Barcode == "barcode03"] <- "PCV-C-1464-1"
+  target.df$Concentration[target.df$Barcode == "barcode03"] <- 0.1
+  target.df$Contaminant[target.df$Barcode == "barcode04"] <- "PCV-C-0657-1"
+  target.df$Concentration[target.df$Barcode == "barcode04"] <- 0.1
+  target.df$Contaminant[target.df$Barcode == "barcode05"] <- "09B10326"
+  target.df$Concentration[target.df$Barcode == "barcode05"] <- 0.1
+  target.df$Contaminant[target.df$Barcode == "barcode06"] <- "PCV-C-0720-1"
+  target.df$Concentration[target.df$Barcode == "barcode06"] <- 0.1
+  
+  
+  target.df$Run[target.df$Run == "Mixed_23F_fulldb_V14_400T_graphk19_p75_all_CBL_all"] <- "Graph k19 (S=75%)"
+  
+  target.df$Run <- factor(target.df$Run, levels = c("Graph k19 (S=75%)"))
+  
+  operon.length <- 18654
+  genome.length <- 2221315
+  perc.genome <- operon.length / genome.length
+  
+  target.df$Contaminant_species[target.df$Contaminant == "PCV-C-1464-1"] <- "Sample 1"
+  target.df$Contaminant_species[target.df$Contaminant == "PCV-C-0657-1"] <- "Sample 2"
+  target.df$Contaminant_species[target.df$Contaminant == "09B10326"] <- "Sample 3"
+  target.df$Contaminant_species[target.df$Contaminant == "PCV-C-0720-1"] <- "Sample 4"
+  target.df$Contaminant_species <- factor(target.df$Contaminant_species, levels = c("Sample 1", "Sample 2", "Sample 3", "Sample 4"))
+  
+  target.df$Concentration[target.df$Run != "Whole Genome"] <- target.df$Concentration[target.df$Run != "Whole Genome"] * perc.genome
 }
 
 
@@ -750,7 +809,7 @@ ggsave(file="CPS_V14_minimap2_v_graph_fulldb_quantile.svg", plot=p, height = 12,
   p
   ggsave(file="V12_WGS_vs_CPS_CPS_only_quantile.svg", plot=p, height = 6, width = 12)
   
-  p <- ggplot(wgs.df.bootstrap, aes(x = Concentration, y = Enrichment, colour = Run)) + geom_errorbar(stat = "summary", linewidth=1, width=0.3, fun.min = function(z) {quantile(z,0.25)}, fun.max = function(z) {quantile(z,0.75)}) + geom_point(data = wgs.df.observed, aes(x = Concentration, y = Enrichment), size=3) + geom_line(data = wgs.df.observed, aes(x = Concentration, y = Enrichment)) + facet_grid(.~Contaminant) + theme_light() + xlab("Proportion of total DNA targeted for enrichment") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14, angle = 45, hjust=1), axis.text.y = element_text(size = 14), axis.title=element_text(size=20,face="bold"), strip.text.x = element_text(size = 16), legend.position = "none") + scale_color_npg() + scale_x_log10(labels = label_log(digits = 1), breaks=c(10^-3,10^-2,10^-1, 10^-0), limits=c(10^-3, 10^-0)) + scale_y_log10() + theme(strip.text.x = element_text(face = "italic")) + coord_cartesian(ylim=c(1, NA))
+  p <- ggplot(wgs.df.bootstrap, aes(x = Concentration, y = Enrichment, colour = Run)) + geom_errorbar(stat = "summary", linewidth=1, width=0.3, fun.min = function(z) {quantile(z,0.25)}, fun.max = function(z) {quantile(z,0.75)}) + geom_point(data = wgs.df.observed, aes(x = Concentration, y = Enrichment), size=3) + geom_line(data = wgs.df.observed, aes(x = Concentration, y = Enrichment)) + facet_grid(.~Contaminant) + theme_light() + xlab("Proportion of total DNA targeted for enrichment") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14, angle = 45, hjust=1), axis.text.y = element_text(size = 14), axis.title=element_text(size=20,face="bold"), strip.text.x = element_text(size = 16), legend.position = "none") + scale_color_manual(values = c("#4DBBD5B2")) + scale_x_log10(labels = label_log(digits = 1), breaks=c(10^-3,10^-2,10^-1, 10^-0), limits=c(10^-3, 10^-0)) + scale_y_log10() + theme(strip.text.x = element_text(face = "italic")) + coord_cartesian(ylim=c(1, NA))
   p
   ggsave(file="V12_WGS_vs_CPS_WGS_only_quantile.svg", plot=p, height = 6, width = 12)
   
@@ -765,7 +824,7 @@ ggsave(file="CPS_V14_minimap2_v_graph_fulldb_quantile.svg", plot=p, height = 12,
     return(cluster.labs[value])
   }
   
-  colour_vec <- c("23F" = "#e4543d", "3" = "#0089A2",  "6B" = "#003247", "19A" = "#005C73", "19F" = "#53B9D3")
+  colour_vec <- c("23F" = "#e6194B", "3" = "#911eb4",  "6B" = "#f032e6", "19A" = "#000075", "19F" = "#42d4f4")
   #colour_vec <- c("23F" = "#e4543d", "3" = "#818181",  "6B" = "#818181", "19A" = "#818181", "19F" = "#818181")
   #colour_vec <- c("23F" = "black", "3" = "#e4543d",  "6B" = "#53b9d3", "19A" = "#0a9e87", "19F" = "#aa7ae6")
   #colour_vec <- c("23F" = "#e4543d", "3" = "#2c2c2c",  "6B" = "#555555", "19A" = "#818181", "19F" = "#b0b0b0")
@@ -890,6 +949,9 @@ ggsave(file="CPS_V14_minimap2_v_graph_fulldb_quantile.svg", plot=p, height = 12,
 
 # for real mixed samples:
 {
+  boostrap$Enrichment <- boostrap$Enrichment + 0.01
+  observed$Enrichment <- observed$Enrichment + 0.01
+  
   sample.bootstrap <- subset(boostrap, Concentration < 0.001)
   sample.observed <- subset(observed, Concentration < 0.001)
   
@@ -917,6 +979,40 @@ ggsave(file="CPS_V14_minimap2_v_graph_fulldb_quantile.svg", plot=p, height = 12,
   p
   
   ggsave(file="V14_Mixed_graphk19_p75_quantile.svg", plot=p, height = 6, width = 10)
+}
+
+# for real mixed samples looking for multiple CBL
+{
+  sample.bootstrap <- subset(boostrap, Concentration < 0.001)
+  sample.observed <- subset(observed, Concentration < 0.001)
+  
+  p <- ggplot(sample.bootstrap, aes(x = Contaminant_species, y = Enrichment, colour = Size.Type)) + geom_errorbar(stat = "summary", linewidth=1, width=0.3, fun.min = function(z) {quantile(z,0.25)}, fun.max = function(z) {quantile(z,0.75)}) + geom_point(data = sample.observed, aes(x = Contaminant_species, y = Enrichment), size=3) + theme_light() + xlab("Mixture") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title=element_text(size=20,face="bold"), strip.text.x = element_text(size = 16), legend.title=element_text(size=18,face="bold"), legend.text=element_text(size=14)) + guides(colour=guide_legend(title="Library type"), shape=guide_legend(title="Target")) + scale_color_npg() 
+  p
+  
+  observed$Concentration <- signif(observed$Concentration, digits = 1)
+  boostrap$Concentration <- signif(boostrap$Concentration, digits = 1)
+  boostrap$Concentration[boostrap$Concentration == 0.0008] <- "`8x10`^`-4`"
+  boostrap$Concentration[boostrap$Concentration == 0.004] <- "`4x10`^`-3`"
+  observed$Concentration[observed$Concentration == 0.0008] <- "`8x10`^`-4`"
+  observed$Concentration[observed$Concentration == 0.004] <- "`4x10`^`-3`" 
+  observed$Concentration <- factor(observed$Concentration, levels = c("`8x10`^`-4`", "`4x10`^`-3`"))
+  boostrap$Concentration <- factor(boostrap$Concentration, levels = c("`8x10`^`-4`", "`4x10^`-3`"))
+  
+  lower.quartile <- boostrap %>% group_by(Run, Barcode, Size.Type, Alignment) %>%
+    summarize(low.quartile=quantile(Enrichment,probs=0.25))
+  upper.quartile <- boostrap %>% group_by(Run, Barcode, Size.Type, Alignment) %>%
+    summarize(up.quartile=quantile(Enrichment,probs=0.75))
+  
+  new.df <- merge(observed, lower.quartile, by = c("Run", "Barcode", "Size.Type", "Alignment"))
+  new.df <- merge(new.df, upper.quartile, by = c("Run", "Barcode", "Size.Type", "Alignment"))
+  
+  new.df$colour <- FALSE
+  new.df$colour[new.df$Alignment == "23F"] <- TRUE
+  
+  p <- ggplot(new.df, aes(x = Alignment, y = Enrichment, group = Alignment, colour = colour)) + facet_grid(~Contaminant_species, scales = "free_x") + geom_errorbar(aes(ymin=low.quartile, ymax=up.quartile), linewidth=1, width=0.3, position = position_dodge(width = 0.5)) + geom_point(size=3, position = position_dodge(width = 0.5)) + theme_light() + xlab("Serotype detected") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14), axis.title=element_text(size=20,face="bold"), strip.text.x = element_text(size = 16), legend.title=element_text(size=18,face="bold"), legend.text=element_text(size=14), legend.position = "none") + guides(colour=guide_legend(title="Library type"), shape=guide_legend(title="Target\nproportion")) + scale_color_npg() + scale_shape(labels = function(x) parse(text = x)) #+ scale_y_log10() # +
+  p
+  
+  ggsave(file="V14_Mixed_graphk19_p75_multiCBL_quantile.svg", plot=p, height = 6, width = 12)
 }
 
 # for presentations
@@ -954,6 +1050,52 @@ p <- ggplot(boostrap, aes(x = Concentration, y = Enrichment, colour = Run)) + ge
 p
 ggsave(file="WGS_23F_quantiles_for_pres.svg", plot=p, height = 4, width = 16)
 
+
+# for V12 CPS
+# just plot observed values
+# single isolate only
+# single.iso <- subset(observed, Concentration== "100%")
+# p <- ggplot(single.iso, aes(x = Strain, y = Enrichment, colour = Alignment)) + geom_point(size=3) + theme_light() + facet_grid(~Run) + xlab("Strain background") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 12), axis.title=element_text(size=16,face="bold"), strip.text.x = element_text(size = 11), legend.title=element_text(size=14,face="bold"), legend.text=element_text(size=12)) + guides(colour=guide_legend(title="Target CBL")) + scale_color_npg() #+ scale_x_log10(labels = function(x) format(x, scientific = TRUE))# + scale_y_log10()# + stat_summary(fun.data = mean_se, geom = "errorbar", linewidth=1)# + stat_summary(fun.y="mean", geom="line", linewidth=1, linetype = "dotted", aes(group=interaction(Run, Contaminant_species))) + stat_summary(fun.y="mean", geom="point", aes(group=interaction(Run, Contaminant_species)))  
+# p
+# ggsave(file="CPS_v12_singleiso_obs.svg", plot=p, height = 12, width = 15)
+# # plot IQR
+# single.iso.bootstrap <- subset(boostrap, Concentration == "100%")
+# p <- ggplot(single.iso.bootstrap, aes(x = Strain, y = Enrichment, colour = Alignment)) + geom_errorbar(position=position_dodge(width = 0.9), stat = "summary", linewidth=1, width=0.5, fun.min = function(z) {quantile(z,0.25)}, fun.max = function(z) {quantile(z,0.75)}) + geom_point(position=position_dodge(width = 0.9), data = single.iso, aes(x = Strain, y = Enrichment), size=3) + facet_grid(~Run) + theme_light() + xlab("Strain Background") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 12), axis.title=element_text(size=16,face="bold"), strip.text.x = element_text(size = 11), legend.title=element_text(size=14,face="bold"), legend.text=element_text(size=12)) + guides(colour=guide_legend(title="Target CBL")) + scale_color_npg() #+ scale_x_log10(labels = function(x) format(x, scientific = TRUE))# + stat_summary(fun.data = mean_se, geom = "errorbar", linewidth=1)# + stat_summary(fun.y="mean", geom="line", linewidth=1, linetype = "dotted", aes(group=interaction(Run, Contaminant_species))) + stat_summary(fun.y="mean", geom="point", aes(group=interaction(Run, Contaminant_species)))  
+# p
+# ggsave(file="CPS_v12_singleiso_quantiles.svg", plot=p, height = 12, width = 15)
+# 
+# # mixture isolate only
+# mixed.iso <- subset(observed, Concentration== "50%")
+# p <- ggplot(mixed.iso, aes(x = Strain, y = Enrichment, colour = Alignment)) + geom_point(size=3) + theme_light() + facet_grid(~Run) + xlab("Strain mixed with PMEN1 (23F)") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 12), axis.title=element_text(size=16,face="bold"), strip.text.x = element_text(size = 11), legend.title=element_text(size=14,face="bold"), legend.text=element_text(size=12)) + guides(colour=guide_legend(title="Target CBL")) + scale_color_npg() #+ scale_x_log10(labels = function(x) format(x, scientific = TRUE))# + scale_y_log10()# + stat_summary(fun.data = mean_se, geom = "errorbar", linewidth=1)# + stat_summary(fun.y="mean", geom="line", linewidth=1, linetype = "dotted", aes(group=interaction(Run, Contaminant_species))) + stat_summary(fun.y="mean", geom="point", aes(group=interaction(Run, Contaminant_species)))  
+# p
+# ggsave(file="CPS_v12_mixediso_obs.svg", plot=p, height = 12, width = 15)
+# # plot IQR of strain background
+# mixed.iso.23F <- subset(observed, Concentration == "50%" & Alignment == "23F")
+# mixed.iso.bootstrap.23F <- subset(boostrap, Concentration == "50%" & Alignment == "23F")
+# p <- ggplot(mixed.iso.bootstrap.23F, aes(x = Strain.long, y = Enrichment, colour=Strain)) + geom_errorbar(position=position_dodge(width = 0.9), width=0.5, stat = "summary", linewidth=1, fun.min = function(z) {quantile(z,0.25)}, fun.max = function(z) {quantile(z,0.75)}) + geom_point(position=position_dodge(width = 0.9), data = mixed.iso.23F, aes(x = Strain.long, y = Enrichment), size=3) + facet_grid(~Run) + theme_light() + xlab("Strain mixed with PMEN1-23F") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14, angle = 45, vjust = 1, hjust=1), axis.text.y = element_text(size = 12), axis.title=element_text(size=16,face="bold"), strip.text.x = element_text(size = 11), legend.title=element_text(size=14,face="bold"), legend.text=element_text(size=12)) + guides(colour=guide_legend(title="Mixture Strain Background")) + scale_color_npg() #+ scale_x_log10(labels = function(x) format(x, scientific = TRUE))# + stat_summary(fun.data = mean_se, geom = "errorbar", linewidth=1)# + stat_summary(fun.y="mean", geom="line", linewidth=1, linetype = "dotted", aes(group=interaction(Run, Contaminant_species))) + stat_summary(fun.y="mean", geom="point", aes(group=interaction(Run, Contaminant_species)))  
+# p
+# ggsave(file="CPS_v12_mixediso_23Fonly_quantiles.svg", plot=p, height = 12, width = 15)
+# 
+# # IQR of serotype
+# p <- ggplot(mixed.iso.bootstrap.23F, aes(x = Serotype, y = Enrichment, colour=Strain)) + geom_errorbar(position=position_dodge(width = 0.9), width=0.5, stat = "summary", linewidth=1, fun.min = function(z) {quantile(z,0.25)}, fun.max = function(z) {quantile(z,0.75)}) + geom_point(position=position_dodge(width = 0.9), data = mixed.iso.23F, aes(x = Serotype, y = Enrichment), size=3) + facet_grid(~Run) + theme_light() + xlab("Serotype mixed with PMEN1-23F") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14, angle = 45, vjust = 1, hjust=1), axis.text.y = element_text(size = 12), axis.title=element_text(size=16,face="bold"), strip.text.x = element_text(size = 11), legend.title=element_text(size=14,face="bold"), legend.text=element_text(size=12)) + guides(colour=guide_legend(title="Mixture Strain Background")) + scale_color_npg() #+ scale_x_log10(labels = function(x) format(x, scientific = TRUE))# + stat_summary(fun.data = mean_se, geom = "errorbar", linewidth=1)# + stat_summary(fun.y="mean", geom="line", linewidth=1, linetype = "dotted", aes(group=interaction(Run, Contaminant_species))) + stat_summary(fun.y="mean", geom="point", aes(group=interaction(Run, Contaminant_species)))  
+# p
+# ggsave(file="CPS_v12_mixediso_23Fonly_serotype_quantiles.svg", plot=p, height = 12, width = 15)
+# 
+# # compare dilutions of non-serotype 23F operons, mixed only
+# mixed.iso.non23F <- subset(observed, Alignment != "23F" & Concentration== "50%")
+# #mixed.iso.non23F$Strain[mixed.iso.non23F$Strain == "PMEN1-19A"] <- "PMEN1"
+# #mixed.iso.non23F$Strain[mixed.iso.non23F$Strain == "PMEN1-19F"] <- "PMEN1"
+# #mixed.iso.non23F$Alignment[mixed.iso.non23F$Strain == "PMEN14"] <- "19F (PMEN14)"
+# #mixed.iso.non23F$Alignment[mixed.iso.non23F$Strain == "PMEN1" & mixed.iso.non23F$Alignment == "19F"] <- "19F (PMEN1)"
+# mixed.iso.bootstrap.non23F <- subset(boostrap,Alignment != "23F" & Concentration== "50%")
+# #mixed.iso.bootstrap.non23F$Strain[mixed.iso.bootstrap.non23F$Strain == "PMEN1-19A"] <- "PMEN1"
+# #mixed.iso.bootstrap.non23F$Strain[mixed.iso.bootstrap.non23F$Strain == "PMEN1-19F"] <- "PMEN1"
+# #mixed.iso.bootstrap.non23F$Alignment[mixed.iso.bootstrap.non23F$Strain == "PMEN14"] <- "19F (PMEN14)"
+# #mixed.iso.bootstrap.non23F$Alignment[mixed.iso.bootstrap.non23F$Strain == "PMEN1" & mixed.iso.bootstrap.non23F$Alignment == "19F"] <- "19F (PMEN1)"
+# 
+# p <- ggplot(mixed.iso.bootstrap.non23F, aes(x = Serotype, y = Enrichment, colour=Strain)) + geom_errorbar(position=position_dodge(width = 0.9), width=0.5, stat = "summary", linewidth=1, fun.min = function(z) {quantile(z,0.25)}, fun.max = function(z) {quantile(z,0.75)}) + geom_point(position=position_dodge(width = 0.9), data = mixed.iso.non23F, aes(x = Serotype, y = Enrichment), size=3) + facet_grid(~Run) + theme_light() + xlab("Serotype mixed with PMEN1-23F") + ylab("Enrichment") + geom_hline(yintercept = 1, linetype = "dashed") + theme(axis.text.x = element_text(size = 14, angle = 45, vjust = 1, hjust=1), axis.text.y = element_text(size = 12), axis.title=element_text(size=16,face="bold"), strip.text.x = element_text(size = 11), legend.title=element_text(size=14,face="bold"), legend.text=element_text(size=12)) + guides(colour=guide_legend(title="Mixture Strain Background")) + scale_color_npg() #+ scale_x_log10(labels = function(x) format(x, scientific = TRUE))# + stat_summary(fun.data = mean_se, geom = "errorbar", linewidth=1)# + stat_summary(fun.y="mean", geom="line", linewidth=1, linetype = "dotted", aes(group=interaction(Run, Contaminant_species))) + stat_summary(fun.y="mean", geom="point", aes(group=interaction(Run, Contaminant_species)))  
+# p
+#ggsave(file="CPS_v12_mixediso_non23F_serotype_quantiles.svg", plot=p, height = 12, width = 15)
 
 # look at single isolate mixtures
 single.iso <- subset(observed, Concentration == "100%")
@@ -1002,12 +1144,50 @@ mixed.iso.23F$Strain[mixed.iso.23F$Strain == "PMEN1-19F"] <- "PMEN1"
 mixed.iso.23F$Serotype[mixed.iso.23F$Strain == "PMEN14"] <- "19F (PMEN14)"
 mixed.iso.23F$Serotype[mixed.iso.23F$Strain == "PMEN1" & mixed.iso.23F$Serotype == "19F"] <- "19F (PMEN1)"
 
+# add 100% 23F data to all points
+# mixed.iso.23F.temp <- subset(mixed.iso.23F, Serotype != "23F")
+# mixed.iso.23F.temp$Concentration <- "100%"
+# mixed.iso.23F.ss <- mixed.iso.23F[mixed.iso.23F$Serotype == "23F" & mixed.iso.23F$Run == "Size-selected",]
+# mixed.iso.23F.ori <- mixed.iso.23F[mixed.iso.23F$Serotype == "23F" & mixed.iso.23F$Run == "Unselected",]
+# for(i in 1:nrow(mixed.iso.23F.temp)) {
+#   row <- mixed.iso.23F.temp[i,]
+#   # do stuff with row
+#   mixed.iso.23F.temp[i,]$Enrichment <- ifelse(row$Run == "Unselected", mixed.iso.23F.ori$Enrichment, mixed.iso.23F.ss$Enrichment)
+# }
+# mixed.iso.23F <- subset(mixed.iso.23F, Serotype != "23F")
+# mixed.iso.23F <- rbind(mixed.iso.23F, mixed.iso.23F.temp)
+
 # repeat for bootstrapped samples
 mixed.iso.bootstrap.23F <- subset(boostrap,Alignment == "23F")
 mixed.iso.bootstrap.23F$Strain[mixed.iso.bootstrap.23F$Strain == "PMEN1-19A"] <- "PMEN1"
 mixed.iso.bootstrap.23F$Strain[mixed.iso.bootstrap.23F$Strain == "PMEN1-19F"] <- "PMEN1"
 mixed.iso.bootstrap.23F$Serotype[mixed.iso.bootstrap.23F$Strain == "PMEN14"] <- "19F (PMEN14)"
 mixed.iso.bootstrap.23F$Serotype[mixed.iso.bootstrap.23F$Strain == "PMEN1" & mixed.iso.bootstrap.23F$Serotype == "19F"] <- "19F (PMEN1)"
+
+# # add 100% 23F data to all points
+# mixed.iso.bootstrap.23F.temp <- subset(mixed.iso.bootstrap.23F, Serotype != "23F")
+# mixed.iso.bootstrap.23F.temp$Concentration <- "100%"
+# mixed.iso.23F.ss <- mixed.iso.bootstrap.23F[mixed.iso.bootstrap.23F$Serotype == "23F" & mixed.iso.bootstrap.23F$Run == "Size-selected",]
+# mixed.iso.23F.ori <- mixed.iso.bootstrap.23F[mixed.iso.bootstrap.23F$Serotype == "23F" & mixed.iso.bootstrap.23F$Run == "Unselected",]
+# barcodes <- unique(mixed.iso.bootstrap.23F.temp$Barcode)
+# runs <- unique(mixed.iso.bootstrap.23F.temp$Run)
+# 
+# for(b in barcodes) {
+#   for (r in runs)
+#   {
+#     df <- subset(mixed.iso.bootstrap.23F.temp, Barcode == b & Run == r)
+#     if (r == "Unselected")
+#     {
+#       df$Enrichment <- mixed.iso.23F.ori$Enrichment
+#     } else
+#     {
+#       df$Enrichment <- mixed.iso.23F.ss$Enrichment
+#     }
+#     mixed.iso.bootstrap.23F.temp[mixed.iso.bootstrap.23F.temp$Barcode == b & mixed.iso.bootstrap.23F.temp$Run == r,] <- df
+#   }
+# }
+# mixed.iso.bootstrap.23F <- subset(mixed.iso.bootstrap.23F, Serotype != "23F")
+# mixed.iso.bootstrap.23F <- rbind(mixed.iso.bootstrap.23F, mixed.iso.bootstrap.23F.temp)
 
 mixed.iso.23F$Serotype[mixed.iso.23F$Serotype == "23F"] <- "Undiluted"
 mixed.iso.bootstrap.23F$Serotype[mixed.iso.bootstrap.23F$Serotype == "23F"] <- "Undiluted"

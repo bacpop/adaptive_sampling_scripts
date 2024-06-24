@@ -268,9 +268,19 @@ if (experiment != "Mixed_V14")
 } else
 {
   total.df.subset$Concentration <- factor(total.df.subset$Concentration, levels = c("`8x10`^`-4`", "`4x10`^`-3`"))
+  predicted.serotypes <- subset(total.df.subset, percent >= 70 & Channel == "Adaptive" & Barcode != "barcode01" & Barcode != "barcode02")
   p <- ggplot(total.df.subset, aes(x = Concentration, y = percent, colour = factor(highlight), shape=Channel, group=Channel)) + geom_point(alpha=1, size=2, position = position_dodge(width = 0.5)) + theme_light() + facet_wrap(.~Contaminant_species, scales = "free_x", labeller = label_parsed, ncol=5) + xlab("Proportion of total DNA targeted for enrichment") + ylab("Proportion of reference matched (%)") + theme(axis.text.x = element_text(size = 14, angle = 45, hjust=1), axis.text.y = element_text(size = 14), axis.title=element_text(size=20,face="bold"), strip.text.x = element_text(size = 14), strip.text.y = element_text(size = 14, face = "italic"), legend.title=element_text(size=18,face="bold"), legend.text=element_text(size=16)) + geom_hline(yintercept = 70, linetype="dashed", colour = "grey") + guides(colour=guide_legend(title="Serotype"), shape=guide_legend(title="Channel")) + scale_colour_manual(values = colour_vec) + scale_x_discrete(labels=parse(text=levels(total.df.subset$Concentration)))
   p
   ggsave(file="Mixed_V14_pnuemoKITy.svg", plot=p, height = 8, width = 12)
+
+  #for presentation
+  total.df.subset.pres <- subset(total.df.subset, Concentration !="`4x10`^`-3`" & Contaminant_species != "`Pneumo R6`")
+  total.df.subset.pres$Channel <- as.character(total.df.subset.pres$Channel)
+  total.df.subset.pres$Channel[total.df.subset.pres$Channel == "Adaptive"] <- "NAS"
+  total.df.subset.pres$Channel <- factor(total.df.subset.pres$Channel, levels = c("NAS", "Control"))
+  p <- ggplot(total.df.subset.pres, aes(x = Channel, y = percent, colour = factor(highlight), group=Channel)) + geom_point(alpha=1, size=4, position = position_dodge(width = 0.5)) + theme_light() + facet_wrap(.~Contaminant_species, scales = "free_x", labeller = label_parsed, ncol=4) + xlab("Channel") + ylab("Proportion of reference matched (%)") + theme(axis.text.x = element_text(size = 16, angle = 45, hjust=1), axis.text.y = element_text(size = 14), axis.title=element_text(size=20,face="bold"), strip.text.x = element_text(size = 14), strip.text.y = element_text(size = 14, face = "italic"), legend.title=element_text(size=18,face="bold"), legend.text=element_text(size=16)) + geom_hline(yintercept = 70, linetype="dashed", colour = "grey") + guides(colour=guide_legend(title="Serotype")) + scale_colour_manual(values = colour_vec) + scale_y_continuous(limits = c(50, 100))
+  p
+  ggsave(file="Mixed_V14_pnuemoKITy_for_pres.svg", plot=p, height = 8, width = 12)
 }
 
 
