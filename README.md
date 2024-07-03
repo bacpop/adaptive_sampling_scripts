@@ -40,7 +40,7 @@ To use `analyse_overhang.py`, direct it to a read directory containing `fastq_pa
 python analyse_overhang.py -f /path/to/read/directory/ -p 0.84 -o /output/prefix -c 1-256 -i /path/to/reference.fasta -t "23F,19A,19F"
 ```
 
-This will generate a summary file, which details the largest overhang for each barcode, and the a dataframe describing the amount of overhang for each read in the dataset.
+This will generate a summary file, which details the largest overhang for each barcode, and a dataframe describing the amount of overhang for each read in the dataset.
 
 ### analyse_coverage.py
 
